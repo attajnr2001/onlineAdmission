@@ -1,0 +1,16 @@
+a {
+    text-decoration: none;
+    color: #000;
+}
+
+/* styles/navbar.css */
+.nav-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.nav-link-active {
+    text-decoration: underline;
+    color: blue;
+    /* You can change this color as needed */
+}

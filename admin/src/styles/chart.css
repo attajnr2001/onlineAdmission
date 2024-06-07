@@ -1,0 +1,12 @@
+.chart {
+    flex: 4;
+    color: gray;
+}
+
+.chart .title {
+    margin-bottom: 20px;
+}
+
+.chart .chartGrid {
+    stroke: rgb(228, 225, 225);
+}
