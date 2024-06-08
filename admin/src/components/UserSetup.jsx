@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Table,
   TableBody,
@@ -11,7 +11,13 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import AddUserModal from "../mod/AddUserModal";
@@ -20,6 +26,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
+import { AuthContext } from "../context/AuthContext";
 
 const UserSetup = () => {
   const [admins, setAdmins] = useState([]);
@@ -29,6 +36,31 @@ const UserSetup = () => {
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState({});
+  const [currentAdminRole, setCurrentAdminRole] = useState(null);
+
+  const { currentUser } = useContext(AuthContext);
+
+  useEffect(() => {
+    const fetchCurrentAdminRole = async () => {
+      try {
+        const adminQuery = query(
+          collection(db, "admin"),
+          where("email", "==", currentUser.email)
+        );
+        const querySnapshot = await getDocs(adminQuery);
+        if (!querySnapshot.empty) {
+          const currentAdmin = querySnapshot.docs[0].data();
+          setCurrentAdminRole(currentAdmin.role);
+        }
+      } catch (error) {
+        console.error("Error fetching current admin role:", error);
+      }
+    };
+
+    if (currentUser && currentUser.email) {
+      fetchCurrentAdminRole();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -126,7 +158,7 @@ const UserSetup = () => {
   }
 
   return (
-    <div>
+    <div style={{ minHeight: "86vh" }}>
       <div className="house-buttons-container">
         <Button
           sx={{ mb: 2 }}
@@ -194,6 +226,7 @@ const UserSetup = () => {
                       variant="outlined"
                       size="small"
                       onClick={() => handleEditUser(admin)}
+                      disabled={currentAdminRole !== "Super"}
                     >
                       Edit
                     </Button>

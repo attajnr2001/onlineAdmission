@@ -6,6 +6,7 @@ import {
   DialogContent,
   TextField,
   MenuItem,
+  Snackbar,
   Alert,
 } from "@mui/material";
 import { doc, updateDoc } from "firebase/firestore";
@@ -22,6 +23,7 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (rowData) {
@@ -44,10 +46,9 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
   };
 
   const handleEditHouse = async () => {
+    setLoading(true);
     try {
-      // Construct the reference to the house document
       const houseDocRef = doc(db, "houses", rowData.id);
-      // Update the document with the new form data
       await updateDoc(houseDocRef, formData);
       console.log("Update done");
       setSuccessMessage("House updated successfully!");
@@ -57,95 +58,115 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
       setSuccessMessage("");
       setErrorMessage("Error updating house: " + error.message);
     }
+    setLoading(false);
 
     setTimeout(() => {
       onClose();
     }, 2000);
   };
 
-  const handleCloseAlert = () => {
+  const handleCloseSnackbar = () => {
     setSuccessMessage("");
     setErrorMessage("");
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Edit House</DialogTitle>
-      <DialogContent>
-        <TextField
-          label="House Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          label="Priority"
-          name="priority"
-          value={formData.priority}
-          onChange={handleChange}
-          type="number"
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          label="Number of Students"
-          name="noOfStudent"
-          type="number"
-          value={formData.noOfStudent}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          label="Gender"
-          name="gender"
-          select
-          value={formData.gender}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-          InputLabelProps={{
-            shrink: true,
-          }}
-        >
-          {["Male", "Female"].map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          label="Bed Capacity"
-          name="bedCapacity"
-          type="number"
-          value={formData.bedCapacity}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleEditHouse}
-          size="small"
-          sx={{ marginBottom: "1em" }}
-        >
-          Edit
-        </Button>
-        {successMessage && (
-          <Alert severity="success" onClose={handleCloseAlert}>
+    <>
+      <Dialog open={open} onClose={onClose}>
+        <DialogTitle>Edit House</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="House Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Priority"
+            name="priority"
+            value={formData.priority}
+            onChange={handleChange}
+            type="number"
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Number of Students"
+            name="noOfStudent"
+            type="number"
+            value={formData.noOfStudent}
+            onChange={handleChange}
+            fullWidth
+            disabled
+            margin="normal"
+            helperText="This is an automatic update value"
+          />
+          <TextField
+            label="Gender"
+            name="gender"
+            select
+            value={formData.gender}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            InputLabelProps={{
+              shrink: true,
+            }}
+          >
+            {["Male", "Female"].map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Bed Capacity"
+            name="bedCapacity"
+            type="number"
+            value={formData.bedCapacity}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleEditHouse}
+            size="small"
+            sx={{ marginBottom: "1em" }}
+            disabled={loading}
+          >
+            {loading ? "Updating..." : "Update"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <Snackbar
+        open={Boolean(successMessage) || Boolean(errorMessage)}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        {successMessage ? (
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
             {successMessage}
           </Alert>
-        )}
-        {errorMessage && (
-          <Alert severity="error" onClose={handleCloseAlert}>
+        ) : (
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="error"
+            sx={{ width: "100%" }}
+          >
             {errorMessage}
           </Alert>
         )}
-      </DialogContent>
-    </Dialog>
+      </Snackbar>
+    </>
   );
 };
 

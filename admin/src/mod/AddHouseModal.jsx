@@ -14,7 +14,6 @@ import {
   collection,
   addDoc,
   getDocs,
-  doc,
   query,
   where,
 } from "firebase/firestore";
@@ -26,11 +25,12 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
   const [formData, setFormData] = useState({
     name: "",
     priority: "",
-    noOfStudent: "",
+    noOfStudent: "0",
     gender: "",
     bedCapacity: "",
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +39,21 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       [name]: value,
     }));
   };
+
   const handleAddHouse = async () => {
+    // Validation check to ensure all fields are filled
+    if (
+      !formData.name ||
+      !formData.priority ||
+      !formData.noOfStudent ||
+      !formData.gender ||
+      !formData.bedCapacity
+    ) {
+      setError("All fields are required.");
+      return;
+    }
+
+    setLoading(true);
     try {
       // Check if a house with the same name already exists
       const querySnapshot = await getDocs(
@@ -52,6 +66,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       const existingHouse = querySnapshot.docs[0];
       if (existingHouse) {
         setError(`A house with the name ${formData.name} already exists.`);
+        setLoading(false);
         return;
       }
       // Add house data to Firestore collection
@@ -78,6 +93,8 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       onClose();
     } catch (error) {
       setError(`Error adding house: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,6 +113,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           label="Priority"
@@ -105,6 +123,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           type="number"
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           label="Number of Students"
@@ -114,6 +133,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           label="Gender"
@@ -123,6 +143,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
           InputLabelProps={{
             shrink: true,
           }}
@@ -141,14 +162,16 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <Button
           variant="contained"
           color="primary"
           onClick={handleAddHouse}
           size="small"
+          disabled={loading}
         >
-          Add
+          {loading ? "Adding..." : "Add"}
         </Button>
       </DialogContent>
       {error && (

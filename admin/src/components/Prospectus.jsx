@@ -49,7 +49,14 @@ const Prospectus = () => {
   }, [schoolID]);
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file && file.type !== "application/pdf") {
+      setUploadError("Please select a PDF file.");
+      setSelectedFile(null);
+    } else {
+      setUploadError(null);
+      setSelectedFile(file);
+    }
   };
 
   const handleUpload = async () => {
@@ -112,7 +119,13 @@ const Prospectus = () => {
       )}
       <p className="newFile">Upload New Prospectus File</p>
       <Input type="file" onChange={handleFileChange} sx={{ my: 1, mr: 1 }} />
-      <Button variant="contained" onClick={handleUpload} size="small" sx={{mb: 2}}>
+      <Button
+        variant="contained"
+        onClick={handleUpload}
+        size="small"
+        sx={{ mb: 2 }}
+        disabled={!selectedFile}
+      >
         Save
       </Button>
       <br />

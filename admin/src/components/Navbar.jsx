@@ -17,13 +17,14 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Button from "@mui/material/Button";
 import { AuthContext } from "../context/AuthContext";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, addDoc, collection } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import ChangePassword from "../mod/ChangePassword";
 import { useParams } from "react-router-dom";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import "../styles/navbar.css";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const HideOnScroll = (props) => {
   const { children } = props;
@@ -48,6 +49,21 @@ const Navbar = () => {
   const [schoolName, setSchoolName] = useState(null);
   const [schoolImage, setSchoolImage] = useState(null);
   const { schoolID } = useParams();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const resetMenuState = () => {
+    setDashboardOpen(false);
+    setUtilitiesOpen(false);
+    setPlacementOpen(false);
+    setActionsOpen(false);
+    setMenuAnchor(null);
+  };
+
+  useEffect(() => {
+    resetMenuState();
+  }, []);
+
+
 
   useEffect(() => {
     if (!schoolID) return; // Early return if schoolID is not available
@@ -56,7 +72,7 @@ const Navbar = () => {
     const unsubscribe = onSnapshot(schoolDocRef, (docSnapshot) => {
       if (docSnapshot.exists()) {
         const schoolData = docSnapshot.data();
-        setSchoolName(schoolData.name); //
+        setSchoolName(schoolData.name);
         setSchoolImage(schoolData.image);
       } else {
         console.log("School document not found");
@@ -66,13 +82,49 @@ const Navbar = () => {
     return () => unsubscribe();
   }, [schoolID]);
 
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true); // Set the loading state to true before starting the logout process
+
+      // Fetch the location IP
+      let locationIP = "unknown";
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        locationIP = data.ip;
+      } catch (fetchError) {
+        console.error("Failed to fetch location IP:", fetchError);
+      }
+
+      // Log the logout action before signing out
+      await addDoc(collection(db, "logs"), {
+        action: "logout",
+        actionDate: new Date(),
+        adminID: currentUser.email,
+        locationIP: locationIP,
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+
+      // Sign out the user
       await signOut(auth);
       dispatch({ type: "LOGOUT" });
       navigate("/login");
     } catch (error) {
-      console.log(error);
+      console.error("Logout error:", error);
+    } finally {
+      setIsLoggingOut(false); // Set the loading state to false after the logout process is complete
     }
   };
 
@@ -247,9 +299,15 @@ const Navbar = () => {
                           </ListItemButton>
                           <ListItemButton sx={{ pl: 4 }} dense>
                             <ListItemText
-                              primary="Logout"
+                              primary={
+                                isLoggingOut ? (
+                                  <CircularProgress size={20} />
+                                ) : (
+                                  "Logout"
+                                )
+                              }
                               sx={{ fontWeight: "bold" }}
-                              onClick={handleLogout}
+                              onClick={isLoggingOut ? undefined : handleLogout}
                             />
                           </ListItemButton>
                         </List>
@@ -264,8 +322,8 @@ const Navbar = () => {
                 </>
               ) : (
                 <Button
-                  color="inherit"
-                  variant="text"
+                  variant="contained"
+                  color="primary"
                   component={Link}
                   to="/login"
                 >

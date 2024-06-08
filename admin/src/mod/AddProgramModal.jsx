@@ -34,18 +34,27 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
   };
 
   const handleAddProgram = async () => {
+    const { programID, name, shortname, noOfStudents } = formData;
+
+    // Check if any field is empty
+    if (!programID || !name || !shortname || !noOfStudents) {
+      setSnackbarMessage("All fields are required.");
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
       // Check if program with the same ID or name already exists
       const programsRef = collection(db, "programs");
       const q = query(
         programsRef,
         where("schoolID", "==", schoolID),
-        where("programID", "==", formData.programID)
+        where("programID", "==", programID)
       );
       const q2 = query(
         programsRef,
         where("schoolID", "==", schoolID),
-        where("name", "==", formData.name)
+        where("name", "==", name)
       );
 
       const [programIDSnapshot, nameSnapshot] = await Promise.all([
@@ -62,14 +71,16 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       // Add program data to Firestore collection
       const docRef = await addDoc(collection(db, "programs"), {
         schoolID: schoolID,
-        programID: formData.programID,
-        shortname: formData.shortname,
-        noOfStudents: parseInt(formData.noOfStudents),
-        name: formData.name,
+        programID: formID,
+        name: name,
+        shortname: shortname,
+        noOfStudents: parseInt(noOfStudents),
       });
       console.log("Program added with ID: ", docRef.id);
+
       // Call the onAddProgram function with the form data
       onAddProgram(formData);
+
       // Clear the form data
       setFormData({
         programID: "",
@@ -77,6 +88,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
         shortname: "",
         noOfStudents: "",
       });
+
       // Close the modal
       onClose();
     } catch (error) {
@@ -95,6 +107,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           label="Program Name"
@@ -103,6 +116,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           label="Short Name"
@@ -111,6 +125,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
         <TextField
           type="number"
@@ -120,8 +135,13 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           onChange={handleChange}
           fullWidth
           margin="normal"
+          required
         />
-        <Button variant="contained" color="primary" onClick={handleAddProgram}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddProgram}
+        >
           Add
         </Button>
       </DialogContent>
@@ -129,6 +149,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}

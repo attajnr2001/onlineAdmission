@@ -60,7 +60,24 @@ const AddStudentModal = ({ open, onClose }) => {
 
   const handleSubmit = async () => {
     try {
-      // Check if a student with the same index number already exists
+      if (
+        !indexNumber ||
+        !firstName ||
+        !lastName ||
+        !gender ||
+        !status ||
+        !program ||
+        !aggregate ||
+        !jhsAttended ||
+        !dateOfbirth ||
+        !smsContact ||
+        !year
+      ) {
+        setAlertMessage("Please Fill all required fields");
+        setSnackbarOpen(true);
+        return;
+      }
+
       const studentQuery = query(
         collection(db, "students"),
         where("schoolID", "==", schoolID),
@@ -133,6 +150,7 @@ const AddStudentModal = ({ open, onClose }) => {
         <DialogTitle>Add A Single Record</DialogTitle>
         <DialogContent>
           <TextField
+            required
             label="Index Number"
             name="indexNumber"
             fullWidth
@@ -141,6 +159,7 @@ const AddStudentModal = ({ open, onClose }) => {
             onChange={(e) => setIndexNumber(e.target.value)}
           />
           <TextField
+            required
             label="First Name"
             name="firstName"
             fullWidth
@@ -149,6 +168,7 @@ const AddStudentModal = ({ open, onClose }) => {
             onChange={(e) => setFirstName(e.target.value)}
           />
           <TextField
+            required
             label="Last Name"
             name="lastName"
             fullWidth
@@ -157,6 +177,7 @@ const AddStudentModal = ({ open, onClose }) => {
             onChange={(e) => setLastName(e.target.value)}
           />
           <TextField
+            required
             label="Gender"
             name="gender"
             select
@@ -172,6 +193,7 @@ const AddStudentModal = ({ open, onClose }) => {
             ))}
           </TextField>
           <TextField
+            required
             label="Status"
             name="status"
             select
@@ -187,6 +209,7 @@ const AddStudentModal = ({ open, onClose }) => {
             ))}
           </TextField>
           <TextField
+            required
             select
             label="Program"
             name="program"
@@ -202,6 +225,7 @@ const AddStudentModal = ({ open, onClose }) => {
             ))}
           </TextField>
           <TextField
+            required
             label="Aggregate of best 6"
             name="aggregate"
             type="number"
@@ -211,6 +235,7 @@ const AddStudentModal = ({ open, onClose }) => {
             onChange={(e) => setAggregate(e.target.value)}
           />
           <TextField
+            required
             label="JHS Attended"
             name="jhsAttended"
             fullWidth
@@ -219,6 +244,7 @@ const AddStudentModal = ({ open, onClose }) => {
             onChange={(e) => setJhsAttended(e.target.value)}
           />
           <TextField
+            required
             label="Date Of Birth"
             name="dateOfbirth"
             type="date"
@@ -229,6 +255,7 @@ const AddStudentModal = ({ open, onClose }) => {
             InputLabelProps={{ shrink: true }}
           />
           <TextField
+            required
             label="SMS Contact"
             name="smsContact"
             type="number"

@@ -13,7 +13,12 @@ const AdmissionDocument = () => {
   };
 
   return (
-    <div className="adminDocs">
+    <div
+      className="adminDocs"
+      style={{
+        minHeight: "85vh",
+      }}
+    >
       <Tabs value={tabValue} onChange={handleChange} indicatorColor="primary">
         <Tab label="Prospectus" />
         <Tab label="Undertaking" />

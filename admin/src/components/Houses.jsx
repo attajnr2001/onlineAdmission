@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// import "../styles/houses.css";
 import {
   Button,
   Table,
@@ -383,7 +382,14 @@ const Houses = () => {
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this house?
+          {selectedRow?.noOfStudent > 0 ? (
+            <Alert severity="warning">
+              This house has students assigned to it. Deleting it will also
+              remove all associated students houses
+            </Alert>
+          ) : (
+            "Are you sure you want to delete this house?"
+          )}
         </DialogContent>
         <DialogActions>
           <Button

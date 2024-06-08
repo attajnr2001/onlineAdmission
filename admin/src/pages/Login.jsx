@@ -46,6 +46,17 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -64,16 +75,23 @@ const Login = () => {
       const querySnapshot = await getDocs(q);
 
       let schoolID = null;
+      let isAdminActive = true; // Initialize a variable to check if admin is active
+
       querySnapshot.forEach((doc) => {
         schoolID = doc.data().schoolID;
+        isAdminActive = doc.data().active; // Check the 'active' field in admin document
       });
+
+      if (!isAdminActive) {
+        throw new Error("Your credentials are deactivated."); // Throw an error if admin is not active
+      }
 
       await addDoc(collection(db, "logs"), {
         action: "login",
         actionDate: new Date(),
         adminID: user.email,
         locationIP: locationIP,
-        platform: "web",
+        platform: getPlatform(),
         schoolID: schoolID,
       });
 
@@ -98,7 +116,12 @@ const Login = () => {
         style={{ minHeight: "100vh" }}
       >
         <Grid item>
-          <Typography variant="h5" component="h5" gutterBottom>
+          <Typography
+            variant="h5"
+            component="h5"
+            gutterBottom
+            sx={{ fontWeight: "bold", color: "#333" }}
+          >
             LOGIN
           </Typography>
         </Grid>

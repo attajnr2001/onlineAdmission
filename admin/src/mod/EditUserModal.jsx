@@ -5,8 +5,9 @@ import {
   DialogTitle,
   DialogContent,
   TextField,
-  Alert,
+  Snackbar,
   MenuItem,
+  Alert,
 } from "@mui/material";
 import { AuthContext } from "../context/AuthContext";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
@@ -68,24 +69,42 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
     }
   };
 
-  const handleCloseAlert = () => {
+  const handleCloseSnackbar = () => {
     setSuccessMessage("");
     setErrorMessage("");
   };
 
   const handleEditUser = async () => {
     try {
-      // Construct the reference to the house document
+      // Construct the reference to the user document
       const userDocRef = doc(db, "admin", selectedUser.id);
       // Update the document with the new form data
       await updateDoc(userDocRef, formData);
-      console.log("Update done");
+
+      // Create a string summarizing the changes made
+      let changesSummary = "";
+      if (formData.fullName !== selectedUser.fullName) {
+        changesSummary += `Full Name changed from ${selectedUser.fullName} to ${formData.fullName}. `;
+      }
+      if (formData.phone !== selectedUser.phone) {
+        changesSummary += `Phone changed from ${selectedUser.phone} to ${formData.phone}. `;
+      }
+      if (formData.role !== selectedUser.role) {
+        changesSummary += `Role changed from ${selectedUser.role} to ${formData.role}. `;
+      }
+      if (formData.active !== selectedUser.active) {
+        changesSummary += `Active status changed from ${
+          selectedUser.active ? "Active" : "Inactive"
+        } to ${formData.active ? "Active" : "Inactive"}. `;
+      }
+
       setSuccessMessage("User updated successfully!");
       setErrorMessage("");
-      // Add log entry to database
+
+      // Add log entry to database with detailed action
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
-        action: "User Edited",
+        action: changesSummary,
         actionDate: new Date(),
         adminID: currentUser.email,
         locationIP: locationIP || "", // Use the current state of locationIP
@@ -178,16 +197,39 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
         >
           Edit
         </Button>
-        {successMessage && (
-          <Alert severity="success" onClose={handleCloseAlert}>
+        <Snackbar
+          open={successMessage !== ""}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={"success"}
+            sx={{ width: "100%" }}
+          >
             {successMessage}
           </Alert>
-        )}
-        {errorMessage && (
-          <Alert severity="error" onClose={handleCloseAlert}>
+        </Snackbar>
+        <Snackbar
+          open={errorMessage !== ""}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={"success"}
+            sx={{ width: "100%" }}
+          >
             {errorMessage}
           </Alert>
-        )}
+        </Snackbar>
+        <Snackbar
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        />
       </DialogContent>
     </Dialog>
   );

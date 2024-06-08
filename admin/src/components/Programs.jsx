@@ -338,7 +338,7 @@ const Programs = () => {
                         }}
                         variant="outlined"
                         size="small"
-                        color="secondary"
+                        color="error"
                         sx={{ ml: 1 }}
                       >
                         Delete
@@ -375,13 +375,20 @@ const Programs = () => {
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this program?
+        {selectedRow?.noOfStudents > 0 ? (
+            <Alert severity="warning">
+              This house has students assigned to it. Deleting it will also
+              remove all associated students houses
+            </Alert>
+          ) : (
+            "Are you sure you want to delete this house?"
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDeleteConfirmation(false)}>
             Cancel
           </Button>
-          <Button onClick={handleDeleteProgram} color="secondary">
+          <Button onClick={handleDeleteProgram} color="error">
             Delete
           </Button>
         </DialogActions>
