@@ -187,27 +187,33 @@ const Navbar = () => {
                 <ListItemButton
                   component={NavLink}
                   to={`/dashboard/${schoolID}/${studentID}`}
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="DASHBOARD" />
                 </ListItemButton>
                 <ListItemButton
                   component={NavLink}
                   to={`/dashboard/${schoolID}/${studentID}/edit-student`}
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="EDIT STUDENT" />
                 </ListItemButton>
                 <ListItemButton
                   component={NavLink}
                   to={``}
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="LOGOUT" />
                 </ListItemButton>
@@ -217,27 +223,33 @@ const Navbar = () => {
                 <ListItemButton
                   component={NavLink}
                   to="/"
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="HOME" />
                 </ListItemButton>
                 <ListItemButton
                   component={NavLink}
                   to="/verify-payment"
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="VERIFY PAYMENT" />
                 </ListItemButton>
                 <ListItemButton
                   component={NavLink}
                   to="/contact"
-                  className={({ isActive }) =>
-                    isActive ? "nav-link-active" : "nav-link"
-                  }
+                  sx={(theme) => ({
+                    "&.nav-link-active": {
+                      backgroundColor: theme.palette.action.selected,
+                    },
+                  })}
                 >
                   <ListItemText primary="CONTACT US" />
                 </ListItemButton>

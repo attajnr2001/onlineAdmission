@@ -7,7 +7,7 @@ const LoadingSkeleton = () => {
     <Box sx={{ width: 300 }}>
       <Skeleton />
       <Skeleton animation="wave" />
-      <Skeleton animation={false} />
+      <Skeleton animation={true} />
     </Box>
   );
 };

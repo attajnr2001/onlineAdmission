@@ -84,6 +84,7 @@ const EditStudent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [admissionData, setAdmissionData] = useState({});
   const [showPersonalRecords, setShowPersonalRecords] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(true); // New state to track photo upload
 
   const toggleWidgets = () => {
     setShowPersonalRecords(!showPersonalRecords);
@@ -140,6 +141,16 @@ const EditStudent = () => {
 
   // uploading student profile picture in firestore
   const uploadImage = () => {
+    if (file.size > 2 * 1024 * 1024) {
+      setSnackbarMessage("File is too large. Maximum size is 2MB.");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      setFile(null);
+      return;
+    }
+
+    setPhotoUploaded(false);
+
     const name = new Date().getTime() + file.name;
     const storageRef = ref(storage, name);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -170,6 +181,7 @@ const EditStudent = () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
           setPhoto(downloadURL);
           setUploading(false);
+          setPhotoUploaded(true); // Set photoUploaded to true when upload is complete
         });
       }
     );
@@ -821,7 +833,7 @@ const EditStudent = () => {
           variant="contained"
           color="primary"
           onClick={handleSaveChanges}
-          disabled={isSaving}
+          disabled={isSaving || !photoUploaded}
           sx={{ mb: 3 }}
         >
           {isSaving ? "Saving..." : "Save Changes"}

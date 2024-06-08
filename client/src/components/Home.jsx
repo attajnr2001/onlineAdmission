@@ -8,6 +8,7 @@ import MuiAccordionSummary from "@mui/material/AccordionSummary";
 import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Avatar from "@mui/material/Avatar";
 import { useNavigate } from "react-router-dom";
 import { db } from "../helpers/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -65,6 +66,10 @@ const Home = () => {
         querySnapshot.forEach((doc) => {
           fetchedSchools.push({ id: doc.id, ...doc.data() });
         });
+
+        // Sort schools by name
+        fetchedSchools.sort((a, b) => a.name.localeCompare(b.name));
+
         setSchools(fetchedSchools);
         setLoading(false);
       } catch (error) {
@@ -115,7 +120,7 @@ const Home = () => {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        height="85vh"
+        minHeight="85vh"
         textAlign="center"
         flexDirection="column"
       >
@@ -125,12 +130,12 @@ const Home = () => {
 
         <div>
           <Typography variant="p" sx={{ mb: 2, color: "#333" }}>
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit. Rerum
-            nostrum odio reiciendis, modi iure sunt quis voluptatibus quae
-            aspernatur, aperiam veritatis deserunt earum. Quidem corrupti
-            consequuntur itaque expedita pariatur aut ab labore. Omnis, eius.
-          </Typography>
-
+            "Welcome to our online admission platform for Senior High School! We
+            are excited to guide you through this important step in your
+            educational journey. Our platform is designed to make the admission
+            process seamless and efficient.
+          </Typography>{" "}
+          <br />
           <TextField
             select
             label="Select your School"
@@ -141,7 +146,10 @@ const Home = () => {
           >
             {schools.map((school) => (
               <MenuItem key={school.id} value={school.id}>
-                {school.name}
+                <Box display="flex" alignItems="center">
+                  <Avatar src={school.image} sx={{ marginRight: 2 }} />
+                  {school.name}
+                </Box>
               </MenuItem>
             ))}
           </TextField>

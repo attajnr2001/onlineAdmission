@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
-import Badge from "@mui/material/Badge";
+import {
+  Badge,
+  Box,
+  Typography,
+  Avatar,
+  Snackbar,
+  Alert,
+  Button,
+  TextField,
+} from "@mui/material";
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import CrisisAlertIcon from "@mui/icons-material/CrisisAlert";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import MuiAccordion from "@mui/material/Accordion";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Avatar from "@mui/material/Avatar";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import { useNavigate } from "react-router-dom";
 import MuiAccordionSummary from "@mui/material/AccordionSummary";
 import MuiAccordionDetails from "@mui/material/AccordionDetails";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button"; // Import MUI Button
 import { useParams } from "react-router-dom";
 import { db } from "../helpers/firebase";
 import {
@@ -257,7 +261,7 @@ const Login = () => {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        height="90vh"
+        minHeight="85vh"
         textAlign="center"
         flexDirection="column"
       >
@@ -294,12 +298,17 @@ const Login = () => {
               aria-controls="panel1d-content"
               id="panel1d-header"
             >
-              <Typography>Collapsible Group Item #1</Typography>
+              <Typography
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
+                <CrisisAlertIcon color="warning" />
+                ADMISSION INSTRUCTIONS
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Suspendiss
+                Enter your B.E.C.E Index Number followed by the year. Eg
+                (100000000024)
               </Typography>
             </AccordionDetails>
           </Accordion>
@@ -311,33 +320,19 @@ const Login = () => {
               aria-controls="panel2d-content"
               id="panel2d-header"
             >
-              <Typography>Collapsible Group Item #2</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Suspendisse malesuada lacus ex, sit amet blandit leo lobortis
-                eget. Lorem ipsum dolor sit
+              <Typography
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
+                <ErrorOutlineIcon color="error" />
+                VERY IMPORTANT NOTICE
               </Typography>
-            </AccordionDetails>
-          </Accordion>
-          <Accordion
-            expanded={expanded === "panel3"}
-            onChange={handleChange("panel3")}
-          >
-            <AccordionSummary
-              aria-controls="panel3d-content"
-              id="panel3d-header"
-            >
-              <Typography>Collapsible Group Item #3</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Suspendisse malesuada lacus ex, sit amet blandit leo lobortis
-                eget. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Suspendisse malesuada lacus ex, sit amet blandit leo lobortis
-                eget.
+                Please ensure that you have printed your CSSPS PLACEMENT FORM.
+                Your ENROLMENT CODE, which can be found on your Placement Form,
+                would be REQUIRED by this system. Your admission is NOT complete
+                without your Enrolment Code.
               </Typography>
             </AccordionDetails>
           </Accordion>

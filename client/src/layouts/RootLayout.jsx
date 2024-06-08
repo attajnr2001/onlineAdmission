@@ -28,7 +28,7 @@ const RootLayout = () => {
         >
           <Typography variant="body2" color="textSecondary">
             © {new Date().getFullYear()} Online SHS Platform. All rights
-            reserved.
+            reserved. Helplines: 0555225561, 0503539089, attajnr731@gmail.com
           </Typography>
         </Box>
       </Container>

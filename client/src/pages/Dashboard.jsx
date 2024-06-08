@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import "../styles/dashboard.css";
+import LoadingSkeleton from "../components/LoadingSkeleton";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -179,20 +180,27 @@ const Dashboard = () => {
         <Grid item xs={12} md={4}>
           <Item>
             {loading ? (
-              <p>Loading...</p>
+              <LoadingSkeleton />
             ) : (
-              <Avatar
-                alt="User Avatar"
-                src={student.image}
-                sx={{ width: 100, height: 100 }}
-              />
+              <>
+                <Avatar
+                  alt="User Avatar"
+                  src={student.image}
+                  sx={{ width: 100, height: 100 }}
+                />
+                <Typography
+                  sx={{ textTransform: "uppercase", fontWeight: "bold" }}
+                >
+                  {student.firstName} {student.lastName}
+                </Typography>
+                <Typography
+                  sx={{ fontSize: "smaller", fontWeight: "bold", mb: 1 }}
+                >
+                  Student Number: {student.admissionNo}
+                </Typography>
+              </>
             )}
-            <Typography sx={{ textTransform: "uppercase", fontWeight: "bold" }}>
-              {student.firstName} {student.lastName}
-            </Typography>
-            <Typography sx={{ fontSize: "smaller", fontWeight: "bold", mb: 1 }}>
-              Student Number: {student.admissionNo}
-            </Typography>
+
             <Button
               variant="contained"
               color="primary"
@@ -208,7 +216,7 @@ const Dashboard = () => {
               style={{
                 margin: "8px 0",
                 color: student.completed ? "green" : "red",
-                fontWeight: "bold"
+                fontWeight: "bold",
               }}
             >
               {/* display color green or red based on student.completd value */}
@@ -218,66 +226,71 @@ const Dashboard = () => {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Grid
-            container
-            rowSpacing={2}
-            columnSpacing={{ xs: 1, sm: 2, md: 3 }}
-            sx={{ mt: { xs: 1, md: 0 } }}
-          >
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>Index Number</h5>
-                <Typography variant="body1" className="info">
-                  {student.indexNumber}
-                </Typography>
-              </LeftAlignedItem>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>Program</h5>
-                <Typography variant="body1" className="info">
-                  {program.name}
-                </Typography>
-              </LeftAlignedItem>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>Gender</h5>
-                <Typography variant="body1" className="info">
-                  {student.gender}
-                </Typography>
-              </LeftAlignedItem>
-            </Grid>
+          {loading ? (
+            <LoadingSkeleton />
+          ) : (
+            <Grid
+              container
+              rowSpacing={2}
+              columnSpacing={{ xs: 1, sm: 2, md: 3 }}
+              sx={{ mt: { xs: 1, md: 0 } }}
+            >
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>Index Number</h5>
 
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>Residential Status</h5>
-                <Typography
-                  variant="body1"
-                  sx={{ textTransform: "capitalize" }}
-                  className="info"
-                >
-                  {student.status}
-                </Typography>
-              </LeftAlignedItem>
+                  <Typography variant="body1" className="info">
+                    {student.indexNumber}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>Program</h5>
+                  <Typography variant="body1" className="info">
+                    {program.name}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>Gender</h5>
+                  <Typography variant="body1" className="info">
+                    {student.gender}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>Residential Status</h5>
+                  <Typography
+                    variant="body1"
+                    sx={{ textTransform: "capitalize" }}
+                    className="info"
+                  >
+                    {student.status}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>House</h5>
+                  <Typography variant="body1" className="info">
+                    {house.name}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LeftAlignedItem>
+                  <h5>Year</h5>
+                  <Typography variant="body1" className="info">
+                    {student.year}
+                  </Typography>
+                </LeftAlignedItem>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>House</h5>
-                <Typography variant="body1" className="info">
-                  {house.name}
-                </Typography>
-              </LeftAlignedItem>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <LeftAlignedItem>
-                <h5>Year</h5>
-                <Typography variant="body1" className="info">
-                  {student.year}
-                </Typography>
-              </LeftAlignedItem>
-            </Grid>
-          </Grid>
+          )}
         </Grid>
 
         <Grid item xs={12} sx={{ mt: 4 }}>
