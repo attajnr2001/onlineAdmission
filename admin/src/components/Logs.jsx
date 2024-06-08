@@ -4,10 +4,8 @@ import {
   collection,
   query,
   where,
-  getDocs,
-  doc,
-  getDoc,
   onSnapshot,
+  getDocs,
 } from "firebase/firestore";
 import { useParams } from "react-router-dom";
 import {
@@ -51,42 +49,46 @@ const Logs = () => {
           logsCollectionRef,
           where("schoolID", "==", schoolID)
         );
-        const querySnapshot = await getDocs(logsQuery);
-        const fetchedLogs = [];
 
-        const adminCollection = collection(db, "admin");
+        const unsubscribe = onSnapshot(logsQuery, async (querySnapshot) => {
+          const fetchedLogs = [];
 
-        for (const _doc of querySnapshot.docs) {
-          const logData = _doc.data();
-          const date = await getCurrentTime(); // Use the World Time API to get the current time
-          const formattedDate = date.toLocaleDateString();
-          const formattedTime = date.toLocaleTimeString();
+          const adminCollection = collection(db, "admin");
 
-          // Fetch adminFullName from admin collection based on adminID
-          const adminEmail = logData.adminID; // Use adminEmail instead of adminID
-          const adminQuery = query(
-            adminCollection,
-            where("email", "==", adminEmail)
-          ); // Query based on email
-          const adminQuerySnapshot = await getDocs(adminQuery);
-          let adminFullName = "Unknown";
+          for (const _doc of querySnapshot.docs) {
+            const logData = _doc.data();
+            const date = await getCurrentTime(); // Use the World Time API to get the current time
+            const formattedDate = date.toLocaleDateString();
+            const formattedTime = date.toLocaleTimeString();
 
-          adminQuerySnapshot.forEach((doc) => {
-            adminFullName = doc.data().fullName;
-          });
+            // Fetch adminFullName from admin collection based on adminID
+            const adminEmail = logData.adminID; // Use adminEmail instead of adminID
+            const adminQuery = query(
+              adminCollection,
+              where("email", "==", adminEmail)
+            ); // Query based on email
+            const adminQuerySnapshot = await getDocs(adminQuery);
+            let adminFullName = "Unknown";
 
-          fetchedLogs.push({
-            id: doc.id,
-            ...logData,
-            formattedDate,
-            formattedTime,
-            adminFullName,
-          });
-        }
+            adminQuerySnapshot.forEach((doc) => {
+              adminFullName = doc.data().fullName;
+            });
 
-        fetchedLogs.sort((a, b) => b.actionDate - a.actionDate);
-        setLogs(fetchedLogs);
-        setLoading(false);
+            fetchedLogs.push({
+              id: _doc.id,
+              ...logData,
+              formattedDate,
+              formattedTime,
+              adminFullName,
+            });
+          }
+
+          fetchedLogs.sort((a, b) => b.actionDate - a.actionDate);
+          setLogs(fetchedLogs);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
       } catch (error) {
         console.error("Error fetching logs:", error);
         setError(error);

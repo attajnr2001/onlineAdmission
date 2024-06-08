@@ -25,7 +25,7 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [locationIP, setLocationIP] = useState("127.58585.499"); // location IP to be fixed later
+  const [locationIP, setLocationIP] = useState("127.0.0.1"); // Placeholder IP
   const [currentDateTime, setCurrentDateTime] = useState(null);
 
   const handleSnackbarClose = () => {
@@ -56,8 +56,17 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
 
     fetchLocationIP();
   }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!oldPassword || !newPassword) {
+      setSnackbarMessage("Both password fields must be filled!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
     try {
       const credential = EmailAuthProvider.credential(
         currentUser.email,
@@ -98,13 +107,20 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
     fetch("http://worldtimeapi.org/api/timezone/Africa/Accra")
       .then((response) => response.json())
       .then((data) => {
-        const currentDateTime = data.datetime;
-        setCurrentDateTime(currentDateTime);
+        const dateTimeString = data.datetime;
+        const dateTimeParts = dateTimeString.split(/[+\-]/);
+        const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+
+        // Subtract one hour from the datetime
+        dateTime.setHours(dateTime.getHours() - 1);
+
+
+        setCurrentDateTime(dateTime);
       })
       .catch((error) => {
         console.error("Error fetching datetime from World Time API:", error);
       });
-  }, [open]); // Reset state and fetch datetime when modal opens
+  }, [open]);
 
   return (
     <>
@@ -113,6 +129,7 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
+              required
               autoFocus
               margin="dense"
               id="old-password"
@@ -123,6 +140,7 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
               onChange={(e) => setOldPassword(e.target.value)}
             />
             <TextField
+              required
               margin="dense"
               id="new-password"
               label="New Password"

@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { TextField, Button, Alert } from "@mui/material";
-import { doc, updateDoc, onSnapshot } from "firebase/firestore";
+import React, { useState, useEffect, useContext } from "react";
+import { TextField, Button, Snackbar, Alert } from "@mui/material";
+import {
+  doc,
+  updateDoc,
+  onSnapshot,
+  collection,
+  addDoc,
+} from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const EditSchoolDetails = () => {
   const { schoolID } = useParams();
@@ -13,8 +20,38 @@ const EditSchoolDetails = () => {
   const [headMasterName, setHeadMasterName] = useState("");
   const [helpDeskNo, setHelpDeskNo] = useState("");
   const [box, setBox] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [locationIP, setLocationIP] = useState("");
+  const { currentUser } = useContext(AuthContext);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
 
   useEffect(() => {
     const fetchSchoolData = () => {
@@ -46,6 +83,10 @@ const EditSchoolDetails = () => {
   }, [schoolID]);
 
   const handleSubmit = async () => {
+    if (isUpdating) return;
+
+    setIsUpdating(true);
+
     try {
       const schoolDocRef = doc(db, "school", schoolID);
       await updateDoc(schoolDocRef, {
@@ -57,13 +98,44 @@ const EditSchoolDetails = () => {
         helpDeskNo,
         box,
       });
-      setSuccessMessage("School details updated successfully!");
-      setErrorMessage("");
+
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Add log entry to database
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Updated school details for ${name}.`,
+        actionDate: dateTime,
+        schoolID: schoolID,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+      });
+
+      setSnackbarMessage("School details updated successfully!");
+      setSnackbarSeverity("success");
     } catch (error) {
       console.error("Error updating school details:", error);
-      setSuccessMessage("");
-      setErrorMessage("Error updating school details: " + error.message);
+      setSnackbarMessage("Error updating school details: " + error.message);
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setIsUpdating(false);
+      setSnackbarOpen(true);
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -150,12 +222,25 @@ const EditSchoolDetails = () => {
           color="primary"
           onClick={handleSubmit}
           sx={{ marginBottom: "1em" }}
+          disabled={isUpdating}
         >
-          Confirm
+          {isUpdating ? "Updating..." : "Update"}
         </Button>
-        {successMessage && <Alert severity="success">{successMessage}</Alert>}
-        {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
       </div>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

@@ -25,6 +25,7 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
   const { schoolID } = useParams();
   const { currentUser } = useContext(AuthContext);
   const [locationIP, setLocationIP] = useState("");
@@ -51,7 +52,7 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
       }
     };
 
-    fetchLocationIP(); // Call the function when component mounts
+    fetchLocationIP();
   }, []);
 
   useEffect(() => {
@@ -86,6 +87,10 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
   };
 
   const handleEditUser = async () => {
+    if (isUpdating) return;
+
+    setIsUpdating(true);
+
     try {
       // Construct the reference to the user document
       const userDocRef = doc(db, "admin", selectedUser.id);
@@ -112,13 +117,24 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
       setSuccessMessage("User updated successfully!");
       setErrorMessage("");
 
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
       // Add log entry to database with detailed action
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: changesSummary,
-        actionDate: new Date(),
+        actionDate: dateTime,
         adminID: currentUser.email,
-        locationIP: locationIP || "", // Use the current state of locationIP
+        locationIP: locationIP || "",
         platform: getPlatform(),
         schoolID: schoolID,
       });
@@ -126,6 +142,8 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
       console.error("Error updating user:", error);
       setSuccessMessage("");
       setErrorMessage("Error updating user: " + error.message);
+    } finally {
+      setIsUpdating(false);
     }
     setTimeout(() => {
       onClose();
@@ -184,7 +202,7 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
         </TextField>
 
         <TextField
-          label="active"
+          label="Active"
           name="active"
           select
           value={formData.active === true ? "Active" : "Inactive"}
@@ -205,8 +223,9 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
           onClick={handleEditUser}
           size="small"
           sx={{ marginBottom: "1em" }}
+          disabled={isUpdating}
         >
-          Edit
+          {isUpdating ? "Updating..." : "Update"}
         </Button>
         <Snackbar
           open={successMessage !== ""}
@@ -215,8 +234,8 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={"success"}
+            onClose={() => setSuccessMessage("")}
+            severity="success"
             sx={{ width: "100%" }}
           >
             {successMessage}
@@ -229,8 +248,8 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={"success"}
+            onClose={() => setErrorMessage("")}
+            severity="error"
             sx={{ width: "100%" }}
           >
             {errorMessage}

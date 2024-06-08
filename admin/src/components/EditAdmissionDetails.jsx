@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   TextField,
   Button,
@@ -10,6 +10,7 @@ import {
 import {
   collection,
   query,
+  addDoc,
   where,
   updateDoc,
   doc,
@@ -17,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const EditAdmissionDetails = () => {
   const { schoolID } = useParams();
@@ -34,6 +36,7 @@ const EditAdmissionDetails = () => {
     announcement: "",
   });
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [reOpeningDate, setReOpeningDate] = useState("");
   const [reOpeningTime, setReOpeningTime] = useState("");
@@ -42,6 +45,33 @@ const EditAdmissionDetails = () => {
   const [announcementTextFields, setAnnouncementTextFields] = useState([
     { value: "" },
   ]);
+  const [locationIP, setLocationIP] = useState("");
+  const { currentUser } = useContext(AuthContext);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
 
   useEffect(() => {
     const fetchAdmissionDetails = () => {
@@ -98,6 +128,9 @@ const EditAdmissionDetails = () => {
   };
 
   const handleSubmit = async () => {
+    if (isUpdating) return;
+
+    setIsUpdating(true);
     try {
       await updateDoc(doc(db, "admission", admissionData.id), {
         senderID: admissionData.senderID,
@@ -114,12 +147,37 @@ const EditAdmissionDetails = () => {
           (textField) => textField.value
         ),
       });
+
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Admission Details updated Successfully`,
+        actionDate: dateTime,
+        schoolID: schoolID,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+      });
+
       setAlertMessage("Document successfully updated!");
       setAlertSeverity("success");
       setSnackbarOpen(true);
     } catch (error) {
+      console.error(error);
       setAlertMessage("Error updating document");
       setAlertSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setIsUpdating(false);
       setSnackbarOpen(true);
     }
   };
@@ -368,8 +426,9 @@ const EditAdmissionDetails = () => {
           color="primary"
           onClick={handleSubmit}
           sx={{ marginBottom: "1em" }}
+          disabled={isUpdating}
         >
-          Confirm
+          {isUpdating ? "Updating..." : "Update"}
         </Button>
 
         <Snackbar

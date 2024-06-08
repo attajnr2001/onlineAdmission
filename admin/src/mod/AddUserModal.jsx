@@ -22,6 +22,8 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [locationIP, setLocationIP] = useState("");
+  const [currentDateTime, setCurrentDateTime] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
   const { schoolID } = useParams();
 
   useEffect(() => {
@@ -75,6 +77,14 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
   };
 
   const handleAddUser = async () => {
+    if (!email || !fullName || !role || !phone) {
+      setSnackbarOpen(true);
+      setSnackbarMessage("Error: All fields are required.");
+      return;
+    }
+
+    setIsAdding(true);
+
     try {
       const currentUser = auth.currentUser;
 
@@ -94,6 +104,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
         setSnackbarMessage(
           "Error: You do not have permission to add new admins."
         );
+        setIsAdding(false);
         return;
       }
 
@@ -107,6 +118,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
       if (!emailQuerySnapshot.empty) {
         setSnackbarOpen(true);
         setSnackbarMessage("Error: Email already exists for this school.");
+        setIsAdding(false);
         return;
       }
 
@@ -126,11 +138,22 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
         active: true,
       });
 
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
       // Log the addition of a new user
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Added new admin: ${fullName} with email: ${email}`,
-        actionDate: new Date(),
+        actionDate: dateTime,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -145,6 +168,8 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
       console.error("Error adding user:", error);
       setSnackbarOpen(true);
       setSnackbarMessage("Error adding user. Please try again.");
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -153,6 +178,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
       <DialogTitle>Add New Admin</DialogTitle>
       <DialogContent>
         <TextField
+          required
           label="Email"
           type="email"
           fullWidth
@@ -161,6 +187,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
           onChange={handleEmailChange}
         />
         <TextField
+          required
           label="Full Name"
           type="text"
           fullWidth
@@ -169,6 +196,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
           onChange={handleFullNameChange}
         />
         <TextField
+          required
           label="Role"
           name="role"
           select
@@ -185,6 +213,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
           ))}
         </TextField>
         <TextField
+          required
           label="Phone Number"
           type="text"
           fullWidth
@@ -192,13 +221,19 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
           value={phone}
           onChange={handlePhoneChange}
         />
-        <Button variant="contained" color="primary" onClick={handleAddUser}>
-          Confirm
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddUser}
+          disabled={isAdding}
+        >
+          {isAdding ? "Adding..." : "Add User"}
         </Button>
       </DialogContent>
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         onClose={() => setSnackbarOpen(false)}
       >
         <Alert

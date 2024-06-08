@@ -1,6 +1,7 @@
 import "../styles/configLink.css";
 import { NavLink } from "react-router-dom";
 import { Settings, Person, Dashboard } from "@mui/icons-material";
+import "../styles/configLink.css"
 
 const ConfigLink = () => {
   return (
