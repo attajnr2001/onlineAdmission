@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 import {
   collection,
   query,
@@ -38,7 +38,33 @@ const AddStudentModal = ({ open, onClose }) => {
   const [smsContact, setSmsContact] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [locationIP, setLocationIP] = useState("");
 
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
   useEffect(() => {
     const unsubscribePrograms = onSnapshot(
       query(collection(db, "programs"), where("schoolID", "==", schoolID)),
@@ -70,13 +96,15 @@ const AddStudentModal = ({ open, onClose }) => {
         !aggregate ||
         !jhsAttended ||
         !dateOfbirth ||
-        !smsContact ||
-        !year
+        !smsContact
       ) {
         setAlertMessage("Please Fill all required fields");
         setSnackbarOpen(true);
         return;
       }
+
+      setLoading(true);
+      const currentUser = auth.currentUser;
 
       const studentQuery = query(
         collection(db, "students"),
@@ -88,6 +116,7 @@ const AddStudentModal = ({ open, onClose }) => {
       if (!studentSnapshot.empty) {
         setAlertMessage("Error:Student with this index number already exists.");
         setSnackbarOpen(true);
+        setLoading(false);
         return;
       }
 
@@ -133,13 +162,37 @@ const AddStudentModal = ({ open, onClose }) => {
       await updateDoc(programRef, {
         noOfStudents: increment(1),
       });
+
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Added new Student: ${indexNumber}`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
       console.log(`Student added with ID: ${newStudent.id}`);
-      setAlertMessage(`Student added with ID: ${newStudent.id}`);
+      setAlertMessage(`Student added with ID: ${indexNumber}`);
       setSnackbarOpen(true);
+      setLoading(false);
       onClose(); // Close the modal
     } catch (error) {
       setAlertMessage("Error adding student");
       setSnackbarOpen(true);
+      setLoading(false);
       console.error("Error adding student:", error);
     }
   };
@@ -269,8 +322,9 @@ const AddStudentModal = ({ open, onClose }) => {
             color="primary"
             size="small"
             onClick={handleSubmit}
+            disabled={loading}
           >
-            Add
+            {loading ? "Adding..." : "Add"}
           </Button>
         </DialogContent>
       </Dialog>

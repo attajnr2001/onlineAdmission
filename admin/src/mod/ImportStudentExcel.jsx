@@ -19,7 +19,7 @@ import {
   increment,
   getDocs,
 } from "firebase/firestore";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 
 const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
   const [excelFile, setExcelFile] = useState(null);

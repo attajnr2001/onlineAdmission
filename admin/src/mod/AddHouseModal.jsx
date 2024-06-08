@@ -77,8 +77,8 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
 
     setLoading(true);
     try {
-      // Check if a house with the same name already exists
       const currentUser = auth.currentUser;
+      // Check if a house with the same name already exists
       const querySnapshot = await getDocs(
         query(
           collection(db, "houses"),

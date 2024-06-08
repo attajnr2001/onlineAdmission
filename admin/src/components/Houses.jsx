@@ -146,9 +146,10 @@ const Houses = () => {
 
   const handleDeleteHouse = async () => {
     if (!selectedRow) return;
-    const currentUser = auth.currentUser;
 
     try {
+      const currentUser = auth.currentUser;
+      
       const houseDocRef = doc(db, "houses", selectedRow.id);
       await deleteDoc(houseDocRef);
 

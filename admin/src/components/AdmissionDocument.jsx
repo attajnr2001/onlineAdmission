@@ -16,7 +16,7 @@ const AdmissionDocument = () => {
     <div
       className="adminDocs"
       style={{
-        minHeight: "85vh",
+        height: "60vh",
       }}
     >
       <Tabs value={tabValue} onChange={handleChange} indicatorColor="primary">

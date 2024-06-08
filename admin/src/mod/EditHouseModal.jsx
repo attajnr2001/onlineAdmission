@@ -22,10 +22,10 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
     bedCapacity: "",
   });
 
-  const { schoolID } = useParams();
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [loading, setLoading] = useState(false);
+  const { schoolID } = useParams();
   const [locationIP, setLocationIP] = useState("");
 
   useEffect(() => {
@@ -75,8 +75,8 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
 
   const handleEditHouse = async () => {
     setLoading(true);
-    const currentUser = auth.currentUser;
     try {
+      const currentUser = auth.currentUser;
       const houseDocRef = doc(db, "houses", rowData.id);
       await updateDoc(houseDocRef, formData);
 

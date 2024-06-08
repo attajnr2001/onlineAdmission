@@ -7,9 +7,11 @@ import {
   TextField,
   Alert,
   Snackbar,
+  MenuItem,
 } from "@mui/material";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../helpers/firebase";
+import { doc, updateDoc,collection, addDoc } from "firebase/firestore";
+import { db, auth } from "../helpers/firebase";
+import { useParams } from "react-router-dom";
 
 const EditProgramModal = ({ open, onClose, program }) => {
   const [formData, setFormData] = useState({
@@ -22,6 +24,33 @@ const EditProgramModal = ({ open, onClose, program }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { schoolID } = useParams();
+  const [locationIP, setLocationIP] = useState("");
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   useEffect(() => {
     if (program) {
@@ -45,10 +74,32 @@ const EditProgramModal = ({ open, onClose, program }) => {
   const handleEditProgram = async () => {
     setLoading(true);
     try {
+      const currentUser = auth.currentUser;
       // Construct the reference to the house document
       const programDocRef = doc(db, "programs", program.id);
       // Update the document with the new form data
       await updateDoc(programDocRef, formData);
+
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new user
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `${formData.name} is updated`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
       console.log("Update done");
       setSuccessMessage("Program updated successfully!");
       setErrorMessage("");
@@ -59,9 +110,7 @@ const EditProgramModal = ({ open, onClose, program }) => {
     }
     setLoading(false);
 
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+    onClose();
   };
 
   const handleCloseSnackbar = () => {
@@ -87,9 +136,23 @@ const EditProgramModal = ({ open, onClose, program }) => {
             name="name"
             value={formData.name}
             onChange={handleChange}
+            select
             fullWidth
             margin="normal"
-          />
+          >
+            {[
+              "General Arts",
+              "General Science",
+              "Business",
+              "Technical",
+              "Home Economics",
+              "Visual Arts",
+            ].map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             label="Short Name"
             name="shortname"

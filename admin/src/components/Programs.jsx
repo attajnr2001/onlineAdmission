@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import AddProgramModal from "../mod/AddProgramModal";
 import EditProgramModal from "../mod/EditProgramModal";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 import {
   collection,
   query,
@@ -28,6 +28,7 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  addDoc,
 } from "firebase/firestore";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
@@ -49,6 +50,32 @@ const Programs = () => {
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [locationIP, setLocationIP] = useState("");
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -99,8 +126,30 @@ const Programs = () => {
     if (!selectedRow) return;
 
     try {
+      const currentUser = auth.currentUser;
+
       const programDocRef = doc(db, "programs", selectedRow.id);
       await deleteDoc(programDocRef);
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Deleted Program: ${selectedRow.name}`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
       console.log("Program deleted successfully.");
     } catch (error) {
       console.error("Error deleting house:", error);
@@ -375,7 +424,7 @@ const Programs = () => {
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
-        {selectedRow?.noOfStudents > 0 ? (
+          {selectedRow?.noOfStudents > 0 ? (
             <Alert severity="warning">
               This house has students assigned to it. Deleting it will also
               remove all associated students houses

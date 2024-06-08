@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Input, Alert } from "@mui/material";
+import { Button, Input, Alert, Snackbar } from "@mui/material";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useParams } from "react-router-dom";
 import {
@@ -9,14 +9,43 @@ import {
   onSnapshot,
   getDocs,
   updateDoc,
+  addDoc,
 } from "firebase/firestore";
-import { db, storage } from "../helpers/firebase";
+import { db, storage, auth } from "../helpers/firebase";
 
 const Undertaking = () => {
   const { schoolID } = useParams();
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [undertakingURL, setUndertakingURL] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [locationIP, setLocationIP] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   useEffect(() => {
     const fetchUndertakingURL = async () => {
@@ -65,7 +94,10 @@ const Undertaking = () => {
       return;
     }
 
+    setLoading(true); // Set loading state to true before upload
+
     try {
+      const currentUser = auth.currentUser;
       const storageRef = ref(
         storage,
         `${new Date().getTime()}${selectedFile.name}`
@@ -79,6 +111,7 @@ const Undertaking = () => {
         (error) => {
           console.error("Error uploading file:", error);
           setUploadError("Error uploading file. Please try again.");
+          setLoading(false); // Set loading state back to false on error
         },
         async () => {
           try {
@@ -97,17 +130,36 @@ const Undertaking = () => {
               console.log("Undertaking URL updated in admission document.");
             });
 
+            // Log the addition of a new undertaking file
+            const logsCollection = collection(db, "logs");
+            await addDoc(logsCollection, {
+              action: `Undertaking File Updated`,
+              actionDate: new Date(),
+              adminID: currentUser.email,
+              schoolID: schoolID,
+              locationIP: locationIP || "",
+              platform: getPlatform(),
+            });
+
             setSelectedFile(null);
+            setLoading(false); // Set loading state back to false on success
+            setSuccessMessage("File uploaded successfully.");
           } catch (error) {
             console.error("Error getting download URL:", error);
             setUploadError("Error getting download URL. Please try again.");
+            setLoading(false); // Set loading state back to false on error
           }
         }
       );
     } catch (error) {
       console.error("Error uploading file:", error);
       setUploadError("Error uploading file. Please try again.");
+      setLoading(false); // Set loading state back to false on error
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSuccessMessage("");
   };
 
   return (
@@ -124,12 +176,26 @@ const Undertaking = () => {
         onClick={handleUpload}
         size="small"
         sx={{ mb: 2 }}
-        disabled={!selectedFile}
+        disabled={!selectedFile || loading}
       >
         Save
       </Button>
       <br />
       {uploadError && <Alert severity="error">{uploadError}</Alert>}
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -9,7 +9,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useParams } from "react-router-dom";
 
@@ -20,11 +20,38 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
     programID: "",
     name: "",
     shortname: "",
-    noOfStudents: "",
+    noOfStudents: "0",
   });
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [locationIP, setLocationIP] = useState("");
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +71,10 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       return;
     }
 
+    setLoading(true);
     try {
+      const currentUser = auth.currentUser;
+
       // Check if program with the same ID or name already exists
       const programsRef = collection(db, "programs");
       const q = query(
@@ -72,12 +102,33 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       // Add program data to Firestore collection
       const docRef = await addDoc(collection(db, "programs"), {
         schoolID: schoolID,
-        programID: formID,
+        programID: programID,
         name: name,
         shortname: shortname,
         noOfStudents: parseInt(noOfStudents),
       });
       console.log("Program added with ID: ", docRef.id);
+
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Added new Program: ${formData.name}`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
 
       // Call the onAddProgram function with the form data
       onAddProgram(formData);
@@ -87,13 +138,15 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
         programID: "",
         name: "",
         shortname: "",
-        noOfStudents: "",
+        noOfStudents: "0",
       });
 
       // Close the modal
       onClose();
     } catch (error) {
       console.error("Error adding program: ", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,8 +205,13 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           margin="normal"
           required
         />
-        <Button variant="contained" color="primary" onClick={handleAddProgram}>
-          Add
+        <Button
+          disabled={loading}
+          variant="contained"
+          color="primary"
+          onClick={handleAddProgram}
+        >
+          {loading ? "Adding..." : "Add"}
         </Button>
       </DialogContent>
       <Snackbar
