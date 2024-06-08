@@ -2,9 +2,16 @@ import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import "../styles/widget.css";
-import { Verified, CheckCircle, Cancel, Chalet, HolidayVillage } from "@mui/icons-material";
+import {
+  Verified,
+  CheckCircle,
+  Cancel,
+  Chalet,
+  HolidayVillage,
+} from "@mui/icons-material";
 import { useParams } from "react-router-dom";
 import LoadingSkeleton from "./LoadingSkeleton"; // Import the Skeleton component
+import { motion, AnimatePresence } from "framer-motion";
 
 const Widget = ({ type }) => {
   const [loading, setLoading] = useState(true);
@@ -206,21 +213,29 @@ const Widget = ({ type }) => {
     default:
       break;
   }
+
   return (
-    <div className="widget">
-      <div className="left">
-        <span className="title">{data.title}</span>
-        <span className="pop">{data.pop}</span>
-        <span className="link">{data.link}</span>
-      </div>
-      <div className="right">
-        <div className="percentage positive">
-          {data.perc}
-          {diff}%
+    <AnimatePresence>
+      <motion.div
+        className="widget"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="left">
+          <span className="title">{data.title}</span>
+          <span className="pop">{data.pop}</span>
+          <span className="link">{data.link}</span>
         </div>
-        {data.icon}
-      </div>
-    </div>
+        <div className="right">
+          <div className="percentage positive">
+            {data.perc}
+            {diff}%
+          </div>
+          {data.icon}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

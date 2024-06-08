@@ -188,9 +188,9 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
         </a>
 
         <p>
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Error illo
-          nesciunt architecto, accusantium, cumque non voluptate nam, deleniti
-          provident aperiam natus placeat amet.
+          Please click the button above to download the template. Once
+          downloaded, copy the CSSPS list into the template, and then upload the
+          completed template.
         </p>
         <Input
           type="file"
@@ -199,9 +199,8 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
           accept=".xlsx, .xls, .csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"
         />
         <p>
-          exercitationem. Quod illum laudantium officia saepe reprehenderit!
-          Perspiciatis, voluptate autem! Assumenda aliquam molestiae sequi
-          veniam natus dicta. Id iste inventore dolores fugiat eveniet?
+          You are only allowed to upload excel files, precisely the excel file
+          from the template you have edited
         </p>
         <Button
           variant="contained"

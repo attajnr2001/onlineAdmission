@@ -29,6 +29,17 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
   const { currentUser } = useContext(AuthContext);
   const [locationIP, setLocationIP] = useState("");
 
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
   useEffect(() => {
     const fetchLocationIP = async () => {
       try {
@@ -90,10 +101,10 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
         changesSummary += `Phone changed from ${selectedUser.phone} to ${formData.phone}. `;
       }
       if (formData.role !== selectedUser.role) {
-        changesSummary += `Role changed from ${selectedUser.role} to ${formData.role}. `;
+        changesSummary += `${formData.fullName} Role changed from ${selectedUser.role} to ${formData.role}. `;
       }
       if (formData.active !== selectedUser.active) {
-        changesSummary += `Active status changed from ${
+        changesSummary += ` Active status changed from ${
           selectedUser.active ? "Active" : "Inactive"
         } to ${formData.active ? "Active" : "Inactive"}. `;
       }
@@ -108,7 +119,7 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
         actionDate: new Date(),
         adminID: currentUser.email,
         locationIP: locationIP || "", // Use the current state of locationIP
-        platform: "web",
+        platform: getPlatform(),
         schoolID: schoolID,
       });
     } catch (error) {

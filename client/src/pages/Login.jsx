@@ -29,6 +29,7 @@ import {
 } from "firebase/firestore";
 import PaystackPop from "@paystack/inline-js";
 import LoadingSkeleton from "../components/LoadingSkeleton";
+import { motion } from "framer-motion";
 
 const StyledBadge = styled(Badge, {
   shouldForwardProp: (prop) => prop !== "admissionStatus",
@@ -268,18 +269,24 @@ const Login = () => {
         {schoolImage === "" ? (
           <LoadingSkeleton />
         ) : (
-          <StyledBadge
-            overlap="circular"
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            variant="dot"
-            admissionStatus={admissionStatus} // Pass admissionStatus as a prop
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
           >
-            <Avatar
-              src={schoolImage}
-              sx={{ width: "5rem", height: "5rem", my: 3 }}
-              alt={schoolName}
-            />
-          </StyledBadge>
+            <StyledBadge
+              overlap="circular"
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              variant="dot"
+              admissionStatus={admissionStatus}
+            >
+              <Avatar
+                src={schoolImage}
+                sx={{ width: "5rem", height: "5rem", my: 3 }}
+                alt={schoolName}
+              />
+            </StyledBadge>
+          </motion.div>
         )}
 
         <Typography

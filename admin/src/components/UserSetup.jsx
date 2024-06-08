@@ -52,6 +52,7 @@ const UserSetup = () => {
           const currentAdmin = querySnapshot.docs[0].data();
           setCurrentAdminRole(currentAdmin.role);
         }
+        console.log(currentAdminRole);
       } catch (error) {
         console.error("Error fetching current admin role:", error);
       }

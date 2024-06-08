@@ -26,11 +26,36 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [locationIP, setLocationIP] = useState("127.58585.499"); // location IP to be fixed later
+  const [currentDateTime, setCurrentDateTime] = useState(null);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
 
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -49,10 +74,10 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: "password changed",
-        actionDate: new Date(),
+        actionDate: currentDateTime,
         adminID: currentUser.email,
         locationIP: locationIP,
-        platform: "web",
+        platform: getPlatform(),
         schoolID: schoolID,
       });
 
@@ -68,7 +93,18 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   useEffect(() => {
     setOldPassword("");
     setNewPassword("");
-  }, [open]); // Reset state when modal opens
+
+    // Fetch current datetime from World Time API
+    fetch("http://worldtimeapi.org/api/timezone/Africa/Accra")
+      .then((response) => response.json())
+      .then((data) => {
+        const currentDateTime = data.datetime;
+        setCurrentDateTime(currentDateTime);
+      })
+      .catch((error) => {
+        console.error("Error fetching datetime from World Time API:", error);
+      });
+  }, [open]); // Reset state and fetch datetime when modal opens
 
   return (
     <>

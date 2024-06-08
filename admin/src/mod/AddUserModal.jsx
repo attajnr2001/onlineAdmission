@@ -17,10 +17,11 @@ import { useParams } from "react-router-dom";
 const AddUserModal = ({ open, onClose, onAddUser }) => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState(""); // Set the default value to true
+  const [role, setRole] = useState("");
   const [phone, setPhone] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [locationIP, setLocationIP] = useState("");
   const { schoolID } = useParams();
 
   useEffect(() => {
@@ -31,6 +32,20 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
       setPhone("");
     }
   }, [open]);
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
@@ -48,12 +63,21 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
     setPhone(event.target.value);
   };
 
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
+
   const handleAddUser = async () => {
     try {
-    
       const currentUser = auth.currentUser;
 
-     
       const adminCollectionRef = collection(db, "admin");
       const currentUserQuery = query(
         adminCollectionRef,
@@ -86,7 +110,6 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
         return;
       }
 
-      // Add new user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -101,6 +124,17 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
         phone,
         schoolID,
         active: true,
+      });
+
+      // Log the addition of a new user
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Added new admin: ${fullName} with email: ${email}`,
+        actionDate: new Date(),
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
       });
 
       onClose();

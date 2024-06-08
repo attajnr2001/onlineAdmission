@@ -19,6 +19,7 @@ import {
 import { db } from "../helpers/firebase";
 import "../styles/dashboard.css";
 import LoadingSkeleton from "../components/LoadingSkeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -182,23 +183,45 @@ const Dashboard = () => {
             {loading ? (
               <LoadingSkeleton />
             ) : (
-              <>
-                <Avatar
-                  alt="User Avatar"
-                  src={student.image}
-                  sx={{ width: 100, height: 100 }}
-                />
-                <Typography
-                  sx={{ textTransform: "uppercase", fontWeight: "bold" }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
                 >
-                  {student.firstName} {student.lastName}
-                </Typography>
-                <Typography
-                  sx={{ fontSize: "smaller", fontWeight: "bold", mb: 1 }}
+                  <Avatar
+                    alt="User Avatar"
+                    src={student.image}
+                    sx={{ width: 100, height: 100 }}
+                  />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
                 >
-                  Student Number: {student.admissionNo}
-                </Typography>
-              </>
+                  <Typography
+                    sx={{ textTransform: "uppercase", fontWeight: "bold" }}
+                  >
+                    {student.firstName} {student.lastName}
+                  </Typography>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <Typography
+                    sx={{ fontSize: "smaller", fontWeight: "bold", mb: 1 }}
+                  >
+                    Student Number: {student.admissionNo}
+                  </Typography>
+                </motion.div>
+              </motion.div>
             )}
 
             <Button
