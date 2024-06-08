@@ -137,8 +137,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       });
       // Close the modal
       onClose();
-      setSnackbarOpen(true);
-      setSnackbarMessage("House added successfully!");
+     
     } catch (error) {
       setError(`Error adding house: ${error.message}`);
     } finally {

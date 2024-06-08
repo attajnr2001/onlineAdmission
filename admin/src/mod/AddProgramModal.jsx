@@ -5,6 +5,7 @@ import {
   DialogTitle,
   DialogContent,
   TextField,
+  MenuItem,
   Snackbar,
   Alert,
 } from "@mui/material";
@@ -114,10 +115,24 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           name="name"
           value={formData.name}
           onChange={handleChange}
+          select
           fullWidth
           margin="normal"
           required
-        />
+        >
+          {[
+            "General Science",
+            "General Arts",
+            "Business",
+            "Technical",
+            "Home Economics",
+            "Visual Arts",
+          ].map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
         <TextField
           label="Short Name"
           name="shortname"
@@ -137,11 +152,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           margin="normal"
           required
         />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAddProgram}
-        >
+        <Button variant="contained" color="primary" onClick={handleAddProgram}>
           Add
         </Button>
       </DialogContent>

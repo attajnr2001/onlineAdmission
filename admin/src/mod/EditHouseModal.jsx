@@ -9,8 +9,9 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../helpers/firebase";
+import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
+import { db, auth } from "../helpers/firebase";
+import { useParams } from "react-router-dom";
 
 const EditHouseModal = ({ open, onClose, rowData }) => {
   const [formData, setFormData] = useState({
@@ -21,9 +22,36 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
     bedCapacity: "",
   });
 
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { schoolID } = useParams();
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [loading, setLoading] = useState(false);
+  const [locationIP, setLocationIP] = useState("");
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   useEffect(() => {
     if (rowData) {
@@ -47,27 +75,47 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
 
   const handleEditHouse = async () => {
     setLoading(true);
+    const currentUser = auth.currentUser;
     try {
       const houseDocRef = doc(db, "houses", rowData.id);
       await updateDoc(houseDocRef, formData);
+
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new user
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `${rowData.name} is updated`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+
       console.log("Update done");
-      setSuccessMessage("House updated successfully!");
-      setErrorMessage("");
+      setSnackbarMessage("House updated successfully!");
+      setSnackbarSeverity("success");
     } catch (error) {
       console.error("Error updating house:", error);
-      setSuccessMessage("");
-      setErrorMessage("Error updating house: " + error.message);
+      setSnackbarMessage("Error updating house: " + error.message);
+      setSnackbarSeverity("error");
     }
     setLoading(false);
 
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+    onClose();
   };
 
   const handleCloseSnackbar = () => {
-    setSuccessMessage("");
-    setErrorMessage("");
+    setSnackbarMessage("");
   };
 
   return (
@@ -143,28 +191,18 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
         </DialogContent>
       </Dialog>
       <Snackbar
-        open={Boolean(successMessage) || Boolean(errorMessage)}
+        open={Boolean(snackbarMessage)}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        {successMessage ? (
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity="success"
-            sx={{ width: "100%" }}
-          >
-            {successMessage}
-          </Alert>
-        ) : (
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity="error"
-            sx={{ width: "100%" }}
-          >
-            {errorMessage}
-          </Alert>
-        )}
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
     </>
   );

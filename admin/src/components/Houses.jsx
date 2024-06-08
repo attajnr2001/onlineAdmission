@@ -20,12 +20,13 @@ import {
 } from "@mui/material";
 import AddHouseModal from "../mod/AddHouseModal";
 import EditHouseModal from "../mod/EditHouseModal";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 import {
   collection,
   query,
   where,
   getDocs,
+  addDoc,
   onSnapshot,
   deleteDoc,
   doc,
@@ -45,11 +46,40 @@ const Houses = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [locationIP, setLocationIP] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState("name");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  useEffect(() => {
+    const fetchLocationIP = async () => {
+      try {
+        const response = await fetch("https://api64.ipify.org?format=json");
+        const data = await response.json();
+        setLocationIP(data.ip);
+      } catch (error) {
+        console.error("Error fetching location IP:", error);
+      }
+    };
+
+    fetchLocationIP();
+  }, []);
+
+  const getPlatform = () => {
+    const userAgent = navigator.userAgent;
+    if (/Mobi|Android/i.test(userAgent)) {
+      return "mobile";
+    } else if (/Tablet|iPad/i.test(userAgent)) {
+      return "tablet";
+    } else {
+      return "desktop";
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -116,10 +146,32 @@ const Houses = () => {
 
   const handleDeleteHouse = async () => {
     if (!selectedRow) return;
+    const currentUser = auth.currentUser;
 
     try {
       const houseDocRef = doc(db, "houses", selectedRow.id);
       await deleteDoc(houseDocRef);
+
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Deleted house: ${selectedRow.name}`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
       console.log("House deleted successfully.");
     } catch (error) {
       console.error("Error deleting house:", error);
