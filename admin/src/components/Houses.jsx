@@ -37,6 +37,7 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { visuallyHidden } from "@mui/utils";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const Houses = () => {
   const { schoolID } = useParams();
@@ -46,7 +47,7 @@ const Houses = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [updating, setUpdating] = useState(false);
@@ -55,31 +56,6 @@ const Houses = () => {
   const [orderBy, setOrderBy] = useState("name");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -149,7 +125,7 @@ const Houses = () => {
 
     try {
       const currentUser = auth.currentUser;
-      
+
       const houseDocRef = doc(db, "houses", selectedRow.id);
       await deleteDoc(houseDocRef);
 

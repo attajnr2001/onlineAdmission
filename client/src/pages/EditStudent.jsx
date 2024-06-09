@@ -284,7 +284,26 @@ const EditStudent = () => {
         return;
       }
 
-      // save changes to students collection
+      // Fetch houses collection and randomly select a house if not already assigned
+      let houseID = student.house;
+      if (!houseID) {
+        const housesQuery = query(
+          collection(db, "houses"),
+          where("gender", "==", student.gender)
+        );
+        const housesSnapshot = await getDocs(housesQuery);
+        const housesList = housesSnapshot.docs.map((doc) => doc.id);
+        if (housesList.length === 0) {
+          setSnackbarMessage("No available houses for the student's gender.");
+          setSnackbarSeverity("error");
+          setOpenSnackbar(true);
+          setIsSaving(false);
+          return;
+        }
+        houseID = housesList[Math.floor(Math.random() * housesList.length)];
+      }
+
+      // Save changes to students collection
       const studentRef = doc(db, `students/${studentID}`);
       await updateDoc(studentRef, {
         rawScore,
@@ -292,7 +311,7 @@ const EditStudent = () => {
         enrollmentForm,
         jhsAttended,
         jhsType,
-        photo,
+        image: photo,
         placeOfBirth,
         dateOfBirth,
         nationality,
@@ -316,7 +335,10 @@ const EditStudent = () => {
         guardian,
         residentialTelephone,
         digitalAddress,
+        house: houseID,
+        completed: true,
       });
+
       setSnackbarMessage("Student details updated successfully.");
       setSnackbarSeverity("success");
       setOpenSnackbar(true);

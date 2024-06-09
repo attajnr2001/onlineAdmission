@@ -19,6 +19,7 @@ import {
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const EditAdmissionDetails = () => {
   const { schoolID } = useParams();
@@ -45,33 +46,8 @@ const EditAdmissionDetails = () => {
   const [announcementTextFields, setAnnouncementTextFields] = useState([
     { value: "" },
   ]);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const { currentUser } = useContext(AuthContext);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
 
   useEffect(() => {
     const fetchAdmissionDetails = () => {
@@ -182,7 +158,14 @@ const EditAdmissionDetails = () => {
     }
   };
 
-  const handleTextFieldChange = (index, value) => {
+  const handleTextFieldChange = (field, value) => {
+    setAdmissionData((prevData) => ({
+      ...prevData,
+      [field]: value,
+    }));
+  };
+
+  const handleAnnouncementChange = (index, value) => {
     setAnnouncementTextFields((prevTextFields) => {
       const newTextFields = [...prevTextFields];
       newTextFields[index].value = value;
@@ -392,7 +375,9 @@ const EditAdmissionDetails = () => {
                   type="text"
                   fullWidth
                   value={textField.value}
-                  onChange={(e) => handleTextFieldChange(index, e.target.value)}
+                  onChange={(e) =>
+                    handleAnnouncementChange(index, e.target.value)
+                  }
                   margin="normal"
                   InputLabelProps={{ shrink: true }}
                 />
@@ -409,6 +394,7 @@ const EditAdmissionDetails = () => {
               </Grid>
             </React.Fragment>
           ))}
+
           <Grid item xs={12} sm={1}>
             <Button
               sx={{ mb: { xs: 2, md: 0 } }}

@@ -12,6 +12,7 @@ import {
 import { db, auth } from "../helpers/firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const AddProgramModal = ({ open, onClose, onAddProgram }) => {
   const { schoolID } = useParams();
@@ -26,32 +27,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [locationIP, setLocationIP] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
+  const locationIP = useLocationIP();
 
   const handleChange = (e) => {
     const { name, value } = e.target;

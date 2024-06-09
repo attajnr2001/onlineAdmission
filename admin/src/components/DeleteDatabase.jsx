@@ -1,15 +1,22 @@
+// src/components/DeleteDatabase.js
 import React, { useState } from "react";
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
+  Alert,
 } from "@mui/material";
+import { db, auth } from "../helpers/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const DeleteDatabase = () => {
   const [open, setOpen] = useState(false);
+  const locationIP = useLocationIP();
+  const { schoolID } = useParams();
 
   const handleOpen = () => {
     setOpen(true);
@@ -19,9 +26,38 @@ const DeleteDatabase = () => {
     setOpen(false);
   };
 
-  const handleDelete = () => {
-    console.log("Deleting entire database...");
-    handleClose();
+  const handleDelete = async () => {
+    try {
+      const currentUser = auth.currentUser;
+
+      console.log("Deleting entire database...");
+
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Database Deleted`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+
+      handleClose();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -41,10 +77,10 @@ const DeleteDatabase = () => {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <Alert severity="error">
             Are you sure you want to delete the entire database? This action
             cannot be undone.
-          </DialogContentText>
+          </Alert>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="primary">

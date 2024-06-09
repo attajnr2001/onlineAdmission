@@ -36,6 +36,7 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { visuallyHidden } from "@mui/utils";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const Programs = () => {
   const { schoolID } = useParams();
@@ -50,32 +51,7 @@ const Programs = () => {
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [locationIP, setLocationIP] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
+  const locationIP = useLocationIP();
 
   useEffect(() => {
     const unsubscribe = onSnapshot(

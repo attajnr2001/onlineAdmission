@@ -28,6 +28,7 @@ import {
   collection,
   query,
   where,
+  addDoc,
   onSnapshot,
   deleteDoc,
   doc,
@@ -35,11 +36,12 @@ import {
   updateDoc,
   increment,
 } from "firebase/firestore";
-import { db } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { visuallyHidden } from "@mui/utils";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const PlacementActions = () => {
   const [page, setPage] = useState(0);
@@ -59,6 +61,7 @@ const PlacementActions = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const locationIP = useLocationIP();
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value.toLowerCase());
@@ -122,32 +125,60 @@ const PlacementActions = () => {
     setOpenImportDialog(true);
   };
 
-  const handlePDFExport = () => {
-    const doc = new jsPDF();
-    doc.text("Students List", 20, 10);
-    doc.autoTable({
-      head: [
-        [
-          "Index Number",
-          "Student Name",
-          "JHS Attended",
-          "Aggregate",
-          "Program",
-          "Year",
-          "Status",
+  const handlePDFExport = async () => {
+    try {
+      const currentUser = auth.currentUser;
+
+      const doc = new jsPDF();
+      doc.text("Students List", 20, 10);
+      doc.autoTable({
+        head: [
+          [
+            "Index Number",
+            "Student Name",
+            "JHS Attended",
+            "Aggregate",
+            "Program",
+            "Year",
+            "Status",
+          ],
         ],
-      ],
-      body: filteredStudents.map((student) => [
-        student.indexNumber,
-        `${student.firstName} ${student.lastName}`,
-        student.jhsAttended,
-        student.aggregate,
-        programs[student.program],
-        student.year,
-        student.status,
-      ]),
-    });
-    doc.save("students.pdf");
+        body: filteredStudents.map((student) => [
+          student.indexNumber,
+          `${student.firstName} ${student.lastName}`,
+          student.jhsAttended,
+          student.aggregate,
+          programs[student.program],
+          student.year,
+          student.status,
+        ]),
+      });
+
+      doc.save("students.pdf");
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Student List Downloaded`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+    } catch (error) {
+      console.log("Error downloading list", error);
+    }
   };
 
   const handleRequestSort = (event, property) => {
@@ -174,6 +205,8 @@ const PlacementActions = () => {
     setOpenDialog(false);
     if (confirm) {
       try {
+        const currentUser = auth.currentUser;
+
         const studentsRef = collection(db, "students");
         const q = query(
           studentsRef,
@@ -191,6 +224,29 @@ const PlacementActions = () => {
         querySnapshot.forEach((doc) => {
           deleteDoc(doc.ref);
         });
+
+        // Fetch current datetime from World Time API
+        const response = await fetch(
+          "http://worldtimeapi.org/api/timezone/Africa/Accra"
+        );
+        const data = await response.json();
+        const dateTimeString = data.datetime;
+        const dateTimeParts = dateTimeString.split(/[+\-]/);
+        const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+        // Subtract one hour from the datetime
+        dateTime.setHours(dateTime.getHours() - 1);
+
+        // Log the addition of a new house
+        const logsCollection = collection(db, "logs");
+        await addDoc(logsCollection, {
+          action: `Unregistered Student List deleted`,
+          actionDate: dateTime,
+          adminID: currentUser.email,
+          locationIP: locationIP || "",
+          platform: getPlatform(),
+          schoolID: schoolID,
+        });
+
         console.log("Unregistered students deleted successfully!");
         // Show success snackbar
         setSnackbarMessage("Unregistered students deleted successfully!");

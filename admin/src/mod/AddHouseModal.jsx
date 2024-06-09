@@ -12,6 +12,7 @@ import {
 import { db, auth } from "../helpers/firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const AddHouseModal = ({ open, onClose, onAddHouse }) => {
   const { schoolID } = useParams();
@@ -25,23 +26,9 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,17 +36,6 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       ...prevData,
       [name]: value,
     }));
-  };
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
   };
 
   const handleAddHouse = async () => {
@@ -137,7 +113,6 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
       });
       // Close the modal
       onClose();
-     
     } catch (error) {
       setError(`Error adding house: ${error.message}`);
     } finally {

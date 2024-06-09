@@ -22,6 +22,7 @@ import {
   Alert,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const AddStudentModal = ({ open, onClose }) => {
   const { schoolID } = useParams();
@@ -39,32 +40,8 @@ const AddStudentModal = ({ open, onClose }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
 
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
   useEffect(() => {
     const unsubscribePrograms = onSnapshot(
       query(collection(db, "programs"), where("schoolID", "==", schoolID)),

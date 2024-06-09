@@ -9,9 +9,10 @@ import {
   Snackbar,
   MenuItem,
 } from "@mui/material";
-import { doc, updateDoc,collection, addDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const EditProgramModal = ({ open, onClose, program }) => {
   const [formData, setFormData] = useState({
@@ -25,32 +26,7 @@ const EditProgramModal = ({ open, onClose, program }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const { schoolID } = useParams();
-  const [locationIP, setLocationIP] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
+  const locationIP = useLocationIP();
 
   useEffect(() => {
     if (program) {

@@ -16,6 +16,7 @@ import {
 import { AuthContext } from "../context/AuthContext";
 import { collection, addDoc } from "firebase/firestore";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const ChangePassword = ({ open, onOpen, onClose }) => {
   const { schoolID } = useParams();
@@ -25,37 +26,12 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-  const [locationIP, setLocationIP] = useState("127.0.0.1"); // Placeholder IP
+  const locationIP = useLocationIP();
   const [currentDateTime, setCurrentDateTime] = useState(null);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,7 +89,6 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
 
         // Subtract one hour from the datetime
         dateTime.setHours(dateTime.getHours() - 1);
-
 
         setCurrentDateTime(dateTime);
       })

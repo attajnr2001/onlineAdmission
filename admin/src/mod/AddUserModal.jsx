@@ -13,6 +13,7 @@ import { db, auth } from "../helpers/firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const AddUserModal = ({ open, onClose, onAddUser }) => {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
   const [phone, setPhone] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const [currentDateTime, setCurrentDateTime] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const { schoolID } = useParams();
@@ -34,20 +35,6 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
       setPhone("");
     }
   }, [open]);
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
 
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
@@ -63,17 +50,6 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
 
   const handlePhoneChange = (event) => {
     setPhone(event.target.value);
-  };
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
   };
 
   const handleAddUser = async () => {

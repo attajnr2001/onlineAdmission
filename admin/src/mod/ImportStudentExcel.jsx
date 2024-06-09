@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Input,
   DialogTitle,
@@ -20,10 +20,13 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
   const [excelFile, setExcelFile] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const locationIP = useLocationIP();
 
   const handleFileChange = (event) => {
     let fileTypes = [
@@ -57,6 +60,7 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
 
   const handleUpload = async () => {
     if (excelFile !== null) {
+      setLoading(true);
       const workbook = XLSX.read(excelFile, { type: "buffer" });
       const worksheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[worksheetName];
@@ -92,6 +96,7 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
 
   const saveStudentsToDatabase = async (students) => {
     try {
+      const currentUser = auth.currentUser;
       const studentsCollection = collection(db, "students");
 
       // Fetch existing students with matching schoolID and indexNumber
@@ -122,6 +127,7 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
 
       if (!year) {
         setError(<Alert severity="error">Error fetching admission year</Alert>);
+        setLoading(false);
         return;
       }
 
@@ -162,18 +168,42 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
 
       await Promise.all(programUpdatePromises);
 
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Student List Imported Successfully`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+
       setError(
         <Alert severity="success">
           Students successfully saved to database
         </Alert>
       );
 
+      setLoading(false);
       onClose();
     } catch (error) {
       console.error("Error saving students to database:", error);
       setError(
         <Alert severity="error">Error saving students to database</Alert>
       );
+      setLoading(false);
     }
   };
 
@@ -200,7 +230,8 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
         />
         <p>
           You are only allowed to upload excel files, precisely the excel file
-          from the template you have edited
+          from the template you have edited. Make sure the excel file is
+          populated
         </p>
         <Button
           variant="contained"
@@ -208,14 +239,16 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
           color="primary"
           onClick={handleUpload}
           sx={{ margin: "1em 0" }}
-          disabled={!excelFile}
+          disabled={!excelFile || loading}
         >
-          Upload File
+          {loading ? "Uploading File" : "Upload File"}
         </Button>
         {error && <>{error}</>}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
       </DialogActions>
     </Dialog>
   );

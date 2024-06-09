@@ -12,13 +12,14 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { db, storage, auth } from "../helpers/firebase";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const Prospectus = () => {
   const { schoolID } = useParams();
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [prospectusURL, setProspectusURL] = useState(null);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
 
@@ -26,31 +27,6 @@ const Prospectus = () => {
     setTimeout(() => {
       setSuccessMessage(null);
     }, 5000); // Reset the success message after 5 seconds
-  };
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
   };
 
   useEffect(() => {

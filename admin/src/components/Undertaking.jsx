@@ -12,6 +12,7 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { db, storage, auth } from "../helpers/firebase";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const Undertaking = () => {
   const { schoolID } = useParams();
@@ -19,33 +20,8 @@ const Undertaking = () => {
   const [uploadError, setUploadError] = useState(null);
   const [undertakingURL, setUndertakingURL] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [locationIP, setLocationIP] = useState("");
+  const locationIP = useLocationIP();
   const [successMessage, setSuccessMessage] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
 
   useEffect(() => {
     const fetchUndertakingURL = async () => {

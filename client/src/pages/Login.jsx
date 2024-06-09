@@ -209,7 +209,7 @@ const Login = () => {
       await updateDoc(doc(db, "students", foundStudent.id), {
         hasPaid: true,
       });
-      navigate(`/dashboard/${schoolID}/${foundStudent.id}`);
+      navigate(`/dashboard/${schoolID}/${foundStudent.id}/edit-student`);
     } catch (error) {
       setMessage("Error updating payment status");
       setOpen(true);

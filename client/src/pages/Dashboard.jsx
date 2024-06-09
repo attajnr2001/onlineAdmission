@@ -27,10 +27,11 @@ const Item = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(1),
   textAlign: "center",
   color: theme.palette.text.secondary,
-  display: "flex", // Added flex display
-  alignItems: "center", // Center vertically
-  flexDirection: "column", // Column direction to stack items vertically
-  height: "100%", // Make the Item fill the Grid item's height
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "column",
+  height: "100%",
 }));
 
 const LeftAlignedItem = styled(Paper)(({ theme }) => ({
@@ -143,8 +144,13 @@ const Dashboard = () => {
       // finds the student's house base on the student house value
       // which is an id in the houses collection
       const houseID = studentData.data().house;
-      const houseData = await getDoc(doc(db, `houses/${houseID}`));
-      setHouse(houseData.data());
+      try {
+        const houseData = await getDoc(doc(db, `houses/${houseID}`));
+        setHouse(houseData.data());
+      } catch (error) {
+        console.error("Error fetching house data:", error);
+        setHouse({ name: "No House" });
+      }
     };
     fetchStudentData();
   }, [studentID]);
@@ -196,7 +202,7 @@ const Dashboard = () => {
                   <Avatar
                     alt="User Avatar"
                     src={student.image}
-                    sx={{ width: 100, height: 100 }}
+                    sx={{ width: 100, height: 100, ml: 2 }}
                   />
                 </motion.div>
                 <motion.div
@@ -300,7 +306,7 @@ const Dashboard = () => {
                 <LeftAlignedItem>
                   <h5>House</h5>
                   <Typography variant="body1" className="info">
-                    {house.name}
+                    {house.name ? house.name : "No House"}
                   </Typography>
                 </LeftAlignedItem>
               </Grid>

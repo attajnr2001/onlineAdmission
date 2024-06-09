@@ -13,6 +13,7 @@ import { AuthContext } from "../context/AuthContext";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const EditUserModal = ({ open, onClose, selectedUser }) => {
   const [formData, setFormData] = useState({
@@ -28,32 +29,7 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { schoolID } = useParams();
   const { currentUser } = useContext(AuthContext);
-  const [locationIP, setLocationIP] = useState("");
-
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP();
-  }, []);
+  const locationIP = useLocationIP();
 
   useEffect(() => {
     if (selectedUser) {

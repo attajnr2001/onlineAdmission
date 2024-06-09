@@ -12,10 +12,6 @@ import {
   getDocs,
   onSnapshot,
 } from "firebase/firestore";
-import IconButton from "@mui/material/IconButton";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { motion, AnimatePresence } from "framer-motion";
 
 const HouseAllocations = () => {
   const [houseData, setHouseData] = useState([]);

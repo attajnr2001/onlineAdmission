@@ -13,7 +13,7 @@ import {
   CircularProgress,
   Snackbar,
 } from "@mui/material";
-import { db, storage } from "../helpers/firebase";
+import { db, storage, auth } from "../helpers/firebase";
 import {
   doc,
   getDoc,
@@ -21,11 +21,13 @@ import {
   onSnapshot,
   query,
   collection,
+  addDoc,
   where,
 } from "firebase/firestore";
 import { Camera } from "@mui/icons-material";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useParams } from "react-router-dom";
+import { useLocationIP, getPlatform } from "../helpers/utils";
 
 const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
   const [file, setFile] = useState("");
@@ -42,8 +44,11 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
   const [perc, setPerc] = useState("");
   const [uploading, setUploading] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState("success"); // Add state for alert severity
   const [admissionData, setAdmissionData] = useState({});
+  const [isSaving, setIsSaving] = useState(false); // Add state to manage save button disable state
   const { schoolID } = useParams();
+  const locationIP = useLocationIP();
 
   useEffect(() => {
     const unsubscribeAdmission = onSnapshot(
@@ -130,7 +135,10 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
   }, [file]);
 
   const handleSave = async () => {
+    setIsSaving(true); // Disable the save button
     try {
+      const currentUser = auth.currentUser;
+
       await updateDoc(doc(db, "students", student.id), {
         indexNumber: formData.indexNumber,
         house: formData.house,
@@ -141,10 +149,37 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
         status: formData.status,
         image: formData.image, // Update image URL in Firestore
       });
-      onClose("Student updated successfully"); // Close the modal after saving with success message
+
+      // Fetch current datetime from World Time API
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      const dateTimeParts = dateTimeString.split(/[+\-]/);
+      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
+      // Subtract one hour from the datetime
+      dateTime.setHours(dateTime.getHours() - 1);
+
+      // Log the addition of a new house
+      const logsCollection = collection(db, "logs");
+      await addDoc(logsCollection, {
+        action: `Student Details updated: ${formData.indexNumber}`,
+        actionDate: dateTime,
+        adminID: currentUser.email,
+        locationIP: locationIP || "",
+        platform: getPlatform(),
+        schoolID: schoolID,
+      });
+
+      setAlertSeverity("success");
+      setIsSaving(false); 
+      onClose(); 
     } catch (error) {
       console.error("Error updating student:", error);
       setAlertMessage("Error updating student. Please try again."); // Set error message for alert
+      setAlertSeverity("error"); // Set alert severity to error
+      setIsSaving(false); // Enable the save button
     }
   };
 
@@ -278,14 +313,19 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
         <Button color="primary" onClick={onClose}>
           Cancel
         </Button>
-        <Button color="primary" onClick={handleSave} disabled={uploading}>
-          {uploading ? <CircularProgress size={24} /> : "Save"}
+        <Button
+          color="primary" variant="contained"
+          onClick={handleSave}
+          disabled={isSaving || uploading}
+        >
+          {isSaving || uploading ? "Saving" : "Save"}
         </Button>
       </DialogActions>
       <Snackbar
         open={!!alertMessage}
         autoHideDuration={6000}
         onClose={handleAlertClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
         message={alertMessage}
       />
     </Dialog>
