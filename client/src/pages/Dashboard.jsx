@@ -7,6 +7,7 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import DescriptionIcon from "@mui/icons-material/Description";
 import TaskIcon from "@mui/icons-material/Task";
 import ArticleIcon from "@mui/icons-material/Article";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
 import jsPDF from "jspdf";
 import {
   collection,
@@ -381,6 +382,7 @@ const Dashboard = () => {
           </ol>
         </Grid>
       </Grid>
+      <NetworkStatusWarning/>
     </>
   );
 };

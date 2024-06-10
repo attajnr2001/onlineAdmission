@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
 import MuiAccordion from "@mui/material/Accordion";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -155,6 +156,7 @@ const Home = () => {
           </TextField>
         </div>
       </Box>
+      <NetworkStatusWarning />
     </>
   );
 };

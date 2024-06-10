@@ -19,6 +19,8 @@ import MuiAccordionSummary from "@mui/material/AccordionSummary";
 import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import { useParams } from "react-router-dom";
 import { db } from "../helpers/firebase";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
+
 import {
   collection,
   getDoc,
@@ -373,6 +375,7 @@ const Login = () => {
           </Snackbar>
         </div>
       </Box>
+      <NetworkStatusWarning />
     </>
   );
 };

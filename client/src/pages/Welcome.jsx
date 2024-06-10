@@ -6,8 +6,6 @@ const Welcome = () => {
   return (
     <>
       <Outlet />
-
-     
     </>
   );
 };

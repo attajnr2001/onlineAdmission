@@ -4,7 +4,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Slide from "@mui/material/Slide";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
-import Avatar from "@mui/material/Avatar";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
 import Button from "@mui/material/Button";
 import { Box } from "@mui/system";
 import IconButton from "@mui/material/IconButton";
@@ -134,16 +134,7 @@ const Navbar = () => {
                   >
                     HOME
                   </Button>
-                  <Button
-                    component={NavLink}
-                    to="/verify-payment"
-                    sx={{ color: "black" }}
-                    className={({ isActive }) =>
-                      isActive ? "nav-link-active" : "nav-link"
-                    }
-                  >
-                    VERIFY PAYMENT
-                  </Button>
+
                   <Button
                     component={NavLink}
                     to="/contact"
@@ -231,17 +222,7 @@ const Navbar = () => {
                 >
                   <ListItemText primary="HOME" />
                 </ListItemButton>
-                <ListItemButton
-                  component={NavLink}
-                  to="/verify-payment"
-                  sx={(theme) => ({
-                    "&.nav-link-active": {
-                      backgroundColor: theme.palette.action.selected,
-                    },
-                  })}
-                >
-                  <ListItemText primary="VERIFY PAYMENT" />
-                </ListItemButton>
+
                 <ListItemButton
                   component={NavLink}
                   to="/contact"
@@ -258,6 +239,7 @@ const Navbar = () => {
           </List>
         </Box>
       </Drawer>
+      <NetworkStatusWarning/>
     </>
   );
 };

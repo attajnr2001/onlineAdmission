@@ -13,6 +13,8 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
+
 import {
   collection,
   getDoc,
@@ -259,7 +261,6 @@ const EditStudent = () => {
         !dateOfBirth ||
         !nationality ||
         !religion ||
-        !religiousDenomination ||
         !permanentAddress ||
         !town ||
         !region ||
@@ -873,6 +874,7 @@ const EditStudent = () => {
       >
         <Alert severity={snackbarSeverity}>{snackbarMessage}</Alert>
       </Snackbar>
+      <NetworkStatusWarning />
     </div>
   );
 };
