@@ -24,6 +24,8 @@ import {
   addDoc,
   where,
 } from "firebase/firestore";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import { Camera } from "@mui/icons-material";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useParams } from "react-router-dom";
@@ -173,8 +175,8 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
       });
 
       setAlertSeverity("success");
-      setIsSaving(false); 
-      onClose(); 
+      setIsSaving(false);
+      onClose();
     } catch (error) {
       console.error("Error updating student:", error);
       setAlertMessage("Error updating student. Please try again."); // Set error message for alert
@@ -314,7 +316,8 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
           Cancel
         </Button>
         <Button
-          color="primary" variant="contained"
+          color="primary"
+          variant="contained"
           onClick={handleSave}
           disabled={isSaving || uploading}
         >
@@ -328,6 +331,7 @@ const EditStudentModal = ({ houses, programs, open, onClose, student }) => {
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
         message={alertMessage}
       />
+      <NetworkStatusWarning />
     </Dialog>
   );
 };

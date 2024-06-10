@@ -8,7 +8,8 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-} from "@mui/material";
+} from "@mui/material";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
@@ -182,6 +183,8 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning />
+
     </>
   );
 };

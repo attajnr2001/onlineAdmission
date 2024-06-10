@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Input, Alert, Snackbar } from "@mui/material";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useParams } from "react-router-dom";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   collection,
   query,
@@ -172,6 +173,7 @@ const Undertaking = () => {
           {successMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning/>
     </div>
   );
 };

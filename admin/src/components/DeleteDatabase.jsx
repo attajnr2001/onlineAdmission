@@ -1,5 +1,6 @@
 // src/components/DeleteDatabase.js
 import React, { useState } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   Button,
   Dialog,
@@ -91,6 +92,7 @@ const DeleteDatabase = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <NetworkStatusWarning/>
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   Button,
   Dialog,
@@ -219,6 +220,8 @@ const AddUserModal = ({ open, onClose, onAddUser }) => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning />
+
     </Dialog>
   );
 };

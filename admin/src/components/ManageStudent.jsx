@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   Button,
   Table,
@@ -399,6 +401,7 @@ const ManageStudent = () => {
         programs={programs}
         student={selectedStudent} // Pass the selected student data
       />
+      <NetworkStatusWarning />
     </div>
   );
 };

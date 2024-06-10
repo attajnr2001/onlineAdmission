@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../helpers/firebase";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   collection,
   query,
@@ -194,6 +195,7 @@ const Logs = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+      <NetworkStatusWarning/>
     </div>
   );
 };

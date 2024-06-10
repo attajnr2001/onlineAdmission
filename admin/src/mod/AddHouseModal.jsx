@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   Button,
   Dialog,
@@ -220,6 +222,7 @@ const AddHouseModal = ({ open, onClose, onAddHouse }) => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning />
     </Dialog>
   );
 };

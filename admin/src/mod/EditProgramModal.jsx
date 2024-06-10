@@ -13,6 +13,7 @@ import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import { useLocationIP, getPlatform } from "../helpers/utils";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 const EditProgramModal = ({ open, onClose, program }) => {
   const [formData, setFormData] = useState({
@@ -183,6 +184,8 @@ const EditProgramModal = ({ open, onClose, program }) => {
           </Alert>
         )}
       </Snackbar>
+      <NetworkStatusWarning />
+
     </>
   );
 };

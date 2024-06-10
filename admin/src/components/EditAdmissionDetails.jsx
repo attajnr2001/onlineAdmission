@@ -7,6 +7,7 @@ import {
   Grid,
   Snackbar,
 } from "@mui/material";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   collection,
   query,
@@ -431,6 +432,7 @@ const EditAdmissionDetails = () => {
           </Alert>
         </Snackbar>
       </div>
+      <NetworkStatusWarning />
     </>
   );
 };

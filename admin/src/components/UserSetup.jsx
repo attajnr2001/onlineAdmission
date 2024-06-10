@@ -11,6 +11,8 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   collection,
   onSnapshot,
@@ -251,6 +253,7 @@ const UserSetup = () => {
         onClose={() => setOpenEditModal(false)}
         selectedUser={selectedUser}
       />
+      <NetworkStatusWarning />
     </div>
   );
 };

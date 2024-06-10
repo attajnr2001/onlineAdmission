@@ -7,6 +7,7 @@ import {
   collection,
   addDoc,
 } from "firebase/firestore";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -217,6 +218,7 @@ const EditSchoolDetails = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning/>
     </>
   );
 };

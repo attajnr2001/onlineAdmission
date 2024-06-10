@@ -18,6 +18,7 @@ import {
   TablePagination,
   Box,
 } from "@mui/material";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import AddHouseModal from "../mod/AddHouseModal";
 import EditHouseModal from "../mod/EditHouseModal";
 import { db, auth } from "../helpers/firebase";
@@ -432,6 +433,7 @@ const Houses = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <NetworkStatusWarning/>
     </div>
   );
 };

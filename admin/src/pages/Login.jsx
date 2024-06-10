@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { auth, db } from "../helpers/firebase";
 import { AuthContext } from "../context/AuthContext";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -12,32 +12,20 @@ import {
   IconButton,
   Alert,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Person, Close } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Person } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import Grid from "@mui/material/Grid";
+import { useLocationIP, getPlatform } from "../helpers/utils";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [locationIP, setLocationIP] = useState("");
-
-  useEffect(() => {
-    const fetchLocationIP = async () => {
-      try {
-        const response = await fetch("https://api64.ipify.org?format=json");
-        const data = await response.json();
-        setLocationIP(data.ip);
-      } catch (error) {
-        console.error("Error fetching location IP:", error);
-      }
-    };
-
-    fetchLocationIP(); // Call the function when component mounts
-  }, []); // Empty dependency array to run only once
+  const locationIP = useLocationIP();
 
   const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -46,21 +34,10 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const getPlatform = () => {
-    const userAgent = navigator.userAgent;
-    if (/Mobi|Android/i.test(userAgent)) {
-      return "mobile";
-    } else if (/Tablet|iPad/i.test(userAgent)) {
-      return "tablet";
-    } else {
-      return "desktop";
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(false);
+    setError("");
 
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -99,7 +76,7 @@ const Login = () => {
       navigate(`/admin/dashboard/${schoolID}/placement-actions`);
     } catch (error) {
       console.error("Error signing in:", error);
-      setError(true);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -180,13 +157,14 @@ const Login = () => {
           {loading ? "Logging In..." : "Login"}
         </Button>
         <Snackbar
-          open={error}
+          open={!!error}
           autoHideDuration={6000}
-          onClose={() => setError(false)}
+          onClose={() => setError("")}
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert severity="error">Invalid credentials, Please Try Again</Alert>
+          <Alert severity="error">{error}</Alert>
         </Snackbar>
+        <NetworkStatusWarning /> {/* Use the component here */}
       </Grid>
     </Container>
   );

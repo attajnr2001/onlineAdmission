@@ -23,6 +23,7 @@ import ChangePassword from "../mod/ChangePassword";
 import { useParams } from "react-router-dom";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import "../styles/navbar.css";
 import CircularProgress from "@mui/material/CircularProgress";
 
@@ -62,8 +63,6 @@ const Navbar = () => {
   useEffect(() => {
     resetMenuState();
   }, []);
-
-
 
   useEffect(() => {
     if (!schoolID) return; // Early return if schoolID is not available
@@ -334,6 +333,7 @@ const Navbar = () => {
           </Toolbar>
         </AppBar>
       </HideOnScroll>
+      <NetworkStatusWarning />
     </>
   );
 };

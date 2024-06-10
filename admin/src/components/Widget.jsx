@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import "../styles/widget.css";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   Verified,
   CheckCircle,
@@ -215,27 +217,30 @@ const Widget = ({ type }) => {
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="widget"
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <div className="left">
-          <span className="title">{data.title}</span>
-          <span className="pop">{data.pop}</span>
-          <span className="link">{data.link}</span>
-        </div>
-        <div className="right">
-          <div className="percentage positive">
-            {data.perc}
-            {diff}%
+    <>
+      <AnimatePresence>
+        <motion.div
+          className="widget"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="left">
+            <span className="title">{data.title}</span>
+            <span className="pop">{data.pop}</span>
+            <span className="link">{data.link}</span>
           </div>
-          {data.icon}
-        </div>
-      </motion.div>
-    </AnimatePresence>
+          <div className="right">
+            <div className="percentage positive">
+              {data.perc}
+              {diff}%
+            </div>
+            {data.icon}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+      <NetworkStatusWarning />
+    </>
   );
 };
 

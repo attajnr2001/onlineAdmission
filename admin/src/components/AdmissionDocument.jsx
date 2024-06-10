@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
 import { Tabs, Tab } from "@mui/material";
 import Prospectus from "./Prospectus";
 import Undertaking from "./Undertaking";

@@ -1,12 +1,13 @@
 import { Box, Typography, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import React from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 const Welcome = () => {
   return (
     <Box
       sx={{
-        minHeight: "85vh",
+        height: "85vh",
         justifyContent: "center",
         alignItems: "center",
         textAlign: "center",
@@ -20,7 +21,7 @@ const Welcome = () => {
       >
         Welcome to the SHS Online Admission Portal
       </Typography>
-      <Typography variant="body1" sx={{ maxWidth: "600px", margin: "0 auto" }}>
+      <Typography variant="body1" sx={{ margin: "0 auto" }}>
         We are delighted to have you on board for the Senior High School online
         admission process. Our platform is designed to provide you with a
         seamless and efficient experience as you navigate through the
@@ -40,6 +41,7 @@ const Welcome = () => {
       >
         Login
       </Button>
+      <NetworkStatusWarning />
     </Box>
   );
 };

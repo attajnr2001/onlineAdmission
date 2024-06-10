@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/chart.css";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   BarChart,
   Bar,
@@ -41,6 +43,7 @@ const Chart = ({ aspect, title, data }) => {
           <Bar dataKey="noOfStudent" fill="#8884d8" />
         </BarChart>
       </ResponsiveContainer>
+      <NetworkStatusWarning/>
     </div>
   );
 };

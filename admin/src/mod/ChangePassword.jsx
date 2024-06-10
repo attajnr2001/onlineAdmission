@@ -12,7 +12,8 @@ import {
   reauthenticateWithCredential,
   updatePassword,
   EmailAuthProvider,
-} from "firebase/auth";
+} from "firebase/auth";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import { AuthContext } from "../context/AuthContext";
 import { collection, addDoc } from "firebase/firestore";
 import { useParams } from "react-router-dom";
@@ -145,6 +146,8 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning />
+
     </>
   );
 };

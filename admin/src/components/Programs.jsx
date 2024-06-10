@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   Button,
   Table,
@@ -418,6 +419,7 @@ const Programs = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <NetworkStatusWarning />
     </div>
   );
 };

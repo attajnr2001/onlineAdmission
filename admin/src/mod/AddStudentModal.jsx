@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "../helpers/firebase";
+import { db, auth } from "../helpers/firebase";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   collection,
   query,
@@ -320,6 +321,8 @@ const AddStudentModal = ({ open, onClose }) => {
           {alertMessage}
         </Alert>
       </Snackbar>
+      <NetworkStatusWarning />
+
     </>
   );
 };

@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import { useLocationIP, getPlatform } from "../helpers/utils";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
   const [excelFile, setExcelFile] = useState(null);
@@ -250,6 +251,7 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
           Cancel
         </Button>
       </DialogActions>
+      <NetworkStatusWarning />
     </Dialog>
   );
 };

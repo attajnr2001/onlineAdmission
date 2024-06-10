@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   Button,
   TextField,
@@ -545,6 +546,7 @@ const PlacementActions = () => {
           <Button onClick={() => handleDialogClose(true)}>Confirm</Button>
         </DialogActions>
       </Dialog>
+      <NetworkStatusWarning />
     </div>
   );
 };

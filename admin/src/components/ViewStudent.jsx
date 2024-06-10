@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+
 import {
   Table,
   TableBody,
@@ -27,7 +29,7 @@ const ViewStudent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [programSearchQuery, setProgramSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [order, setOrder] = useState("asc");
@@ -298,6 +300,7 @@ const ViewStudent = () => {
           setPage(0);
         }}
       />
+      <NetworkStatusWarning />
     </>
   );
 };

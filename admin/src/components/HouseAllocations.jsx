@@ -5,6 +5,7 @@ import "../styles/widget.css";
 import Chart from "./Chart";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 import {
   collection,
   query,
@@ -140,6 +141,7 @@ const HouseAllocations = () => {
           data={houseData}
         />
       </div>
+      <NetworkStatusWarning />
     </div>
   );
 };

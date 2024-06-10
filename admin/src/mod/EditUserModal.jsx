@@ -14,6 +14,7 @@ import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
 import { useLocationIP, getPlatform } from "../helpers/utils";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 const EditUserModal = ({ open, onClose, selectedUser }) => {
   const [formData, setFormData] = useState({
@@ -237,6 +238,8 @@ const EditUserModal = ({ open, onClose, selectedUser }) => {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         />
       </DialogContent>
+      <NetworkStatusWarning />
+
     </Dialog>
   );
 };
