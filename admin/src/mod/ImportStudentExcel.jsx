@@ -18,6 +18,7 @@ import {
   updateDoc,
   increment,
   getDocs,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import { useLocationIP, getPlatform } from "../helpers/utils";
@@ -78,15 +79,16 @@ const ImportStudentExcel = ({ open, onClose, programs, schoolID }) => {
             dateOfBirth: student["Date of Birth(dd/mm/yyyy)"],
             firstName: student["First Name"],
             gender: student["Gender"],
-            jhsAttended: student["JHS Attended"],
+            jhsAttended: student["JHS Attended"] || "",
             indexNumber: student["JHS Index No"],
-            lastName: student["Last Name"],
+            lastName: student["Last Name"] || "",
             program: programId || null,
             smsContact: student["SMS Contact"],
             status: student["Status"],
             completed: false,
             hasPaid: false,
             schoolID: schoolID,
+            createdAt: serverTimestamp(),
           };
         });
 

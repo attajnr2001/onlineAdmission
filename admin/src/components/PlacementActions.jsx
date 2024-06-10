@@ -191,7 +191,7 @@ const PlacementActions = () => {
   const filteredStudents = students.filter((student) => {
     const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
     return fullName.includes(searchQuery);
-  });
+  }); 
 
   const sortedStudents = stableSort(
     filteredStudents,

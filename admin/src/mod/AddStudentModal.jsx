@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "../helpers/firebase";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+import { db, auth } from "../helpers/firebase";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 import {
   collection,
@@ -11,6 +12,7 @@ import {
   doc,
   updateDoc,
   increment,
+  serverTimestamp,
 } from "firebase/firestore";
 import {
   Button,
@@ -134,6 +136,7 @@ const AddStudentModal = ({ open, onClose }) => {
         admissionNo: newAdmissionNo,
         completed: false,
         hasPaid: false,
+        createdAt: serverTimestamp(),
       });
 
       const programRef = doc(db, "programs", program);
@@ -322,7 +325,6 @@ const AddStudentModal = ({ open, onClose }) => {
         </Alert>
       </Snackbar>
       <NetworkStatusWarning />
-
     </>
   );
 };

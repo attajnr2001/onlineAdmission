@@ -97,11 +97,6 @@ const Home = () => {
         const admissionData = admissionDoc.data();
         console.log(admissionData);
 
-        if (admissionData.admissionStatus === false) {
-          setSnackbarMessage("Admission is closed for this school.");
-          setSnackbarOpen(true);
-          return;
-        }
       }
     } catch (error) {
       console.error("Error fetching admission data:", error);
@@ -131,10 +126,14 @@ const Home = () => {
 
         <div>
           <Typography variant="p" sx={{ mb: 2, color: "#333" }}>
-            "Welcome to our online admission platform for Senior High School! We
-            are excited to guide you through this important step in your
-            educational journey. Our platform is designed to make the admission
-            process seamless and efficient.
+            "Welcome to our online admission platform for Senior High School!
+            Our platform is designed to make the admission process seamless and
+            efficient. <br /> <br />
+            We developed this SHS Admission Portal. Instead of coming to the
+            school for your SHS admissions process, use this Portal. You can use
+            this portal to check and submit your placement documents, print your
+            admission letter, prospectus and among other things. ONLY REPORT TO
+            SCHOOL WHEN SCHOOL REOPENS...
           </Typography>{" "}
           <br />
           <TextField

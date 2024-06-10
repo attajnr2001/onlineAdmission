@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
+import Avatar from "@mui/material/Avatar";
 import Typography from "@mui/material/Typography";
 import Slide from "@mui/material/Slide";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
@@ -30,11 +31,11 @@ const HideOnScroll = (props) => {
 };
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [schoolName, setSchoolName] = useState(null);
   const [schoolImage, setSchoolImage] = useState(null);
   const { schoolID, studentID } = useParams();
+  const [admission, setAdmission] =  useState(null)
 
   useEffect(() => {
     if (!schoolID) return;
@@ -52,6 +53,12 @@ const Navbar = () => {
 
     return () => unsubscribe();
   }, [schoolID]);
+
+  useEffect(() => {
+    
+  })
+
+
 
   useEffect(() => {
     if (!studentID) return;
@@ -85,8 +92,17 @@ const Navbar = () => {
           }}
         >
           <Toolbar>
-            <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
-              ONLINE ADMISSION
+            <Avatar src={schoolImage} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                flexGrow: 1,
+                textTransform: "uppercase",
+                ml: 1,
+              }}
+            >
+              {schoolName}
             </Typography>
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: "10px" }}>
               {studentID ? (
@@ -239,7 +255,7 @@ const Navbar = () => {
           </List>
         </Box>
       </Drawer>
-      <NetworkStatusWarning/>
+      <NetworkStatusWarning />
     </>
   );
 };

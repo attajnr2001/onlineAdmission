@@ -34,11 +34,20 @@ import LoadingSkeleton from "../components/LoadingSkeleton";
 import { motion } from "framer-motion";
 
 const StyledBadge = styled(Badge, {
-  shouldForwardProp: (prop) => prop !== "admissionStatus",
-})(({ theme, admissionStatus }) => ({
+  shouldForwardProp: (prop) =>
+    prop !== "admissionStatus" && prop !== "isClosingSoon",
+})(({ theme, admissionStatus, isClosingSoon }) => ({
   "& .MuiBadge-badge": {
-    backgroundColor: admissionStatus ? "#44b700" : "#d32f2f", // green if admissionStatus is true, red if false
-    color: admissionStatus ? "#44b700" : "#d32f2f", // green if admissionStatus is true, red if false
+    backgroundColor: isClosingSoon
+      ? "#ff9800" // yellow
+      : admissionStatus
+      ? "#44b700" // green if admissionStatus is true
+      : "#d32f2f", // red if false
+    color: isClosingSoon
+      ? "#ff9800" // yellow
+      : admissionStatus
+      ? "#44b700" // green if admissionStatus is true
+      : "#d32f2f", // red if false
     boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
     "&::after": {
       position: "absolute",
@@ -110,11 +119,25 @@ const Login = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true); // Loading state
   const [amount, setAmount] = useState(false);
-  ``;
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const [admissionStatus, setAdmissionStatus] = useState(false);
+  const [reOpeningDateTime, setReOpeningDateTime] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState(null);
+  const [isClosingSoon, setIsClosingSoon] = useState(false);
+
+  useEffect(() => {
+    if (
+      reOpeningDateTime &&
+      currentDateTime &&
+      reOpeningDateTime < currentDateTime
+    ) {
+      setIsClosingSoon(true);
+    } else {
+      setIsClosingSoon(false);
+    }
+  }, [reOpeningDateTime, currentDateTime]);
 
   useEffect(() => {
     if (!schoolID) return;
@@ -139,7 +162,8 @@ const Login = () => {
       try {
         const schoolDoc = await getDoc(doc(db, `school/${schoolID}`));
         if (schoolDoc.exists()) {
-          setSchool(schoolDoc.data());
+          const data = schoolDoc.data();
+          setSchool(data);
         } else {
           console.error("School not found");
         }
@@ -164,28 +188,13 @@ const Login = () => {
           const data = admissionData.data();
           setAmount(data.serviceCharge);
           setAdmissionStatus(data.admissionStatus);
+          setReOpeningDateTime(data.reOpeningDateTime?.toDate());
         }
       });
       return unsubscribe;
     };
     fetchAdmissionData();
   }, [schoolID]);
-
-  const payment = (foundStudent) => {
-    const payStack = new PaystackPop();
-    payStack.newTransaction({
-      key: process.env.PAYSTACK_LIVE_KEY,
-      amount: amount * 100,
-      email: "attajnr731@gmail.com",
-      firstName: foundStudent.firstName,
-      lastName: foundStudent.lastName,
-      onSuccess: () => handlePaymentSuccess(foundStudent),
-      onCancel: () => {
-        setMessage("Payment cancelled");
-        setOpen(true);
-      },
-    });
-  };
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -206,6 +215,38 @@ const Login = () => {
     fetchStudents();
   }, []);
 
+  const fetchCurrentDateTime = async () => {
+    try {
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      setCurrentDateTime(new Date(data.datetime));
+    } catch (error) {
+      console.error("Error fetching current date and time", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCurrentDateTime();
+  }, []);
+
+  const payment = (foundStudent) => {
+    const payStack = new PaystackPop();
+    payStack.newTransaction({
+      key: process.env.PAYSTACK_LIVE_KEY,
+      amount: amount * 100,
+      email: "attajnr731@gmail.com",
+      firstName: foundStudent.firstName,
+      lastName: foundStudent.lastName,
+      onSuccess: () => handlePaymentSuccess(foundStudent),
+      onCancel: () => {
+        setMessage("Payment cancelled");
+        setOpen(true);
+      },
+    });
+  };
+
   const handlePaymentSuccess = async (foundStudent) => {
     try {
       await updateDoc(doc(db, "students", foundStudent.id), {
@@ -219,8 +260,19 @@ const Login = () => {
   };
 
   const handleLogin = async () => {
+    console.log(reOpeningDateTime);
     if (!admissionStatus) {
       setMessage("Admission is closed, Contact Administrator of school");
+      setOpen(true);
+      return;
+    }
+
+    if (
+      reOpeningDateTime &&
+      currentDateTime &&
+      reOpeningDateTime < currentDateTime
+    ) {
+      setMessage("Admissions are closed, reopening date has passed");
       setOpen(true);
       return;
     }
@@ -281,6 +333,7 @@ const Login = () => {
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               variant="dot"
               admissionStatus={admissionStatus}
+              isClosingSoon={isClosingSoon}
             >
               <Avatar
                 src={schoolImage}

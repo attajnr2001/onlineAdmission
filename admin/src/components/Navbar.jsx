@@ -262,11 +262,11 @@ const Navbar = () => {
                               <ListItemText primary="Manage CSSPS List" />
                             </NavLink>
                           </ListItemButton>
-                          <ListItemButton sx={{ pl: 4 }} dense>
+                          {/* <ListItemButton sx={{ pl: 4 }} dense>
                             <NavLink to={`dashboard/${schoolID}/view-students`}>
                               <ListItemText primary="View Students" />
                             </NavLink>
-                          </ListItemButton>
+                          </ListItemButton> */}
                           <ListItemButton sx={{ pl: 4 }} dense>
                             <NavLink
                               to={`dashboard/${schoolID}/manage-student`}

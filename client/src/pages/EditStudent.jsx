@@ -33,6 +33,7 @@ import {
   validNationalities,
 } from "../helpers/constants";
 import "../styles/editStudent.css";
+import { useNavigate } from "react-router-dom";
 
 const EditStudent = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -87,6 +88,7 @@ const EditStudent = () => {
   const [admissionData, setAdmissionData] = useState({});
   const [showPersonalRecords, setShowPersonalRecords] = useState(false);
   const [photoUploaded, setPhotoUploaded] = useState(true); // New state to track photo upload
+  const navigate = useNavigate();
 
   const toggleWidgets = () => {
     setShowPersonalRecords(!showPersonalRecords);
@@ -348,6 +350,7 @@ const EditStudent = () => {
       setSnackbarMessage("Failed to update student details. Please try again.");
       setSnackbarSeverity("error");
       setOpenSnackbar(true);
+      navigate(`/dashboard/${schoolID}/${studentID}`);
     } finally {
       setIsSaving(false);
     }
