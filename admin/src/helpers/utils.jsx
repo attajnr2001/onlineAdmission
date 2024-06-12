@@ -1,7 +1,6 @@
 // src/helpers/utils.js
 import { useEffect, useState } from "react";
 
-// Custom hook for fetching location IP
 export const useLocationIP = () => {
   const [locationIP, setLocationIP] = useState("");
 
@@ -21,7 +20,7 @@ export const useLocationIP = () => {
 
   return locationIP;
 };
-
+ 
 // Function to get the platform type
 export const getPlatform = () => {
   const userAgent = navigator.userAgent;

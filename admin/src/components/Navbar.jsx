@@ -17,7 +17,17 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Button from "@mui/material/Button";
 import { AuthContext } from "../context/AuthContext";
-import { doc, onSnapshot, addDoc, collection } from "firebase/firestore";
+
+import viteLogo from "/vite.svg";
+import {
+  doc,
+  onSnapshot,
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
 import ChangePassword from "../mod/ChangePassword";
 import { useParams } from "react-router-dom";
@@ -48,9 +58,11 @@ const Navbar = () => {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const [schoolName, setSchoolName] = useState(null);
+  const [schoolShortName, setSchoolShortName] = useState(null);
   const [schoolImage, setSchoolImage] = useState(null);
   const { schoolID } = useParams();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [admissionYear, setAdmissionYear] = useState(null);
 
   const resetMenuState = () => {
     setDashboardOpen(false);
@@ -65,6 +77,24 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
+    if (!schoolID) return;
+
+    const fetchAdmissionData = async () => {
+      const q = query(
+        collection(db, "admission"),
+        where("schoolID", "==", schoolID)
+      );
+      const querySnapshot = await getDocs(q);
+      const admissionData = querySnapshot.docs.map((doc) => doc.data());
+      if (admissionData.length > 0) {
+        setAdmissionYear(admissionData[0].academicYear); // Assuming you want the year from the first document
+      }
+    };
+
+    fetchAdmissionData();
+  }, [schoolID]);
+
+  useEffect(() => {
     if (!schoolID) return; // Early return if schoolID is not available
 
     const schoolDocRef = doc(db, "school", schoolID);
@@ -73,6 +103,7 @@ const Navbar = () => {
         const schoolData = docSnapshot.data();
         setSchoolName(schoolData.name);
         setSchoolImage(schoolData.image);
+        setSchoolShortName(schoolData.shortName);
       } else {
         console.log("School document not found");
       }
@@ -106,10 +137,14 @@ const Navbar = () => {
         console.error("Failed to fetch location IP:", fetchError);
       }
 
-      // Log the logout action before signing out
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
       await addDoc(collection(db, "logs"), {
         action: "logout",
-        actionDate: new Date(),
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP,
         platform: getPlatform(),
@@ -170,8 +205,31 @@ const Navbar = () => {
           }}
         >
           <Toolbar>
-            <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
-              ONLINE ADMISSION
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                flexGrow: 1,
+                textTransform: "uppercase",
+              }}
+            >
+              <Avatar src={viteLogo} sx={{ width: "30px", height: "30px" }} />
+            </Typography>
+            <Avatar
+              alt="User Avatar"
+              src={schoolImage}
+              sx={{ width: 30, height: 30 }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                flexGrow: 1,
+                textTransform: "uppercase",
+              }}
+            >
+              {schoolShortName ? schoolShortName : ""}
+              {admissionYear && `[${admissionYear}]`}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
               {currentUser ? (
@@ -234,7 +292,7 @@ const Navbar = () => {
                           </ListItemButton>
                           <ListItemButton sx={{ pl: 4 }} dense>
                             <NavLink to={`dashboard/${schoolID}/programs`}>
-                              <ListItemText primary="Programs" />
+                              <ListItemText primary="Programmes" />
                             </NavLink>
                           </ListItemButton>
                           <ListItemButton sx={{ pl: 4 }} dense>
@@ -313,11 +371,6 @@ const Navbar = () => {
                       </Collapse>
                     </List>
                   </Menu>
-                  <Avatar
-                    alt="User Avatar"
-                    src={schoolImage}
-                    sx={{ width: 30, height: 30 }}
-                  />
                 </>
               ) : (
                 <Button

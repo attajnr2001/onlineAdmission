@@ -82,16 +82,12 @@ const EditSchoolDetails = () => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
-
+   
       // Add log entry to database
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Updated school details for ${name}.`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         schoolID: schoolID,
         adminID: currentUser.email,
         locationIP: locationIP || "",
@@ -117,7 +113,7 @@ const EditSchoolDetails = () => {
 
   return (
     <>
-      <p>School Details</p>
+      <h4>School Details</h4>
       <div>
         <TextField
           label="Name of School"

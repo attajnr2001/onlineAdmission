@@ -113,6 +113,8 @@ const Login = () => {
   const [expanded, setExpanded] = useState("panel1");
   const { schoolID } = useParams();
   const [schoolName, setSchoolName] = useState("");
+  const [schoolPhone, setSchoolPhone] = useState("");
+  const [schoolHelpDeskNo, setSchoolHelpDeskNo] = useState("");
   const [schoolImage, setSchoolImage] = useState("");
   const [indexNumber, setIndexNumber] = useState("");
   const [school, setSchool] = useState({});
@@ -148,6 +150,8 @@ const Login = () => {
         const schoolData = docSnapshot.data();
         setSchoolName(schoolData.name);
         setSchoolImage(schoolData.image);
+        setSchoolHelpDeskNo(schoolData.helpDeskNo);
+        setSchoolPhone(schoolData.phone);
       } else {
         console.log("School document not found");
       }
@@ -349,6 +353,9 @@ const Login = () => {
           sx={{ fontWeight: "bold", mb: 2, textTransform: "uppercase" }}
         >
           WELCOME TO THE {schoolName} ONLINE SHS PLATFORM
+        </Typography>
+        <Typography sx={{ mb: 2, textTransform: "uppercase" }}>
+          Help Desk Number: {schoolHelpDeskNo} / {schoolPhone}
         </Typography>
 
         <div>

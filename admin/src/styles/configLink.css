@@ -17,8 +17,8 @@
     margin: 0 10px;
 }
 
-.active {
-    background: #d4d4d4;
+a{
+    background: #cbcbcb;
 }
 
 .item {
@@ -27,18 +27,3 @@
     position: relative;
 }
 
-.counter {
-    width: 15px;
-    height: 15px;
-    background-color: red;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    position: absolute;
-    top: -5px;
-    right: -5px;
-}

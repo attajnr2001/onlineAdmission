@@ -7,7 +7,6 @@ import {
   TextField,
   Alert,
   Snackbar,
-  MenuItem,
 } from "@mui/material";
 import { doc, updateDoc, collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
@@ -52,31 +51,34 @@ const EditProgramModal = ({ open, onClose, program }) => {
     setLoading(true);
     try {
       const currentUser = auth.currentUser;
+
       // Construct the reference to the house document
       const programDocRef = doc(db, "programs", program.id);
-      // Update the document with the new form data
-      await updateDoc(programDocRef, formData);
+
+      // Update the document with the new form data and convert name and shortname to uppercase
+      await updateDoc(programDocRef, {
+        ...formData,
+        name: formData.name.toUpperCase(),
+        shortname: formData.shortname.toUpperCase(),
+      });
 
       const response = await fetch(
         "http://worldtimeapi.org/api/timezone/Africa/Accra"
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
 
-      // Log the addition of a new user
+      // Log the update of the program
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `${formData.name} is updated`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
         schoolID: schoolID,
       });
+
       console.log("Update done");
       setSuccessMessage("Program updated successfully!");
       setErrorMessage("");
@@ -113,23 +115,9 @@ const EditProgramModal = ({ open, onClose, program }) => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            select
             fullWidth
             margin="normal"
-          >
-            {[
-              "General Arts",
-              "General Science",
-              "Business",
-              "Technical",
-              "Home Economics",
-              "Visual Arts",
-            ].map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
+          />
           <TextField
             label="Short Name"
             name="shortname"
@@ -185,7 +173,6 @@ const EditProgramModal = ({ open, onClose, program }) => {
         )}
       </Snackbar>
       <NetworkStatusWarning />
-
     </>
   );
 };

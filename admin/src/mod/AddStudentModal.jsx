@@ -37,7 +37,6 @@ const AddStudentModal = ({ open, onClose }) => {
   const [status, setStatus] = useState("");
   const [program, setProgram] = useState("");
   const [aggregate, setAggregate] = useState(0);
-  const [jhsAttended, setJhsAttended] = useState("");
   const [dateOfbirth, setDateOfbirth] = useState("");
   const [smsContact, setSmsContact] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -74,7 +73,6 @@ const AddStudentModal = ({ open, onClose }) => {
         !status ||
         !program ||
         !aggregate ||
-        !jhsAttended ||
         !dateOfbirth ||
         !smsContact
       ) {
@@ -113,12 +111,20 @@ const AddStudentModal = ({ open, onClose }) => {
         studentRef,
         where("schoolID", "==", schoolID)
       );
+
+      let newAdmissionNo;
       const allStudentsSnapshot = await getDocs(allStudentsQuery);
       const admissionNos = allStudentsSnapshot.docs.map(
         (doc) => doc.data().admissionNo
       );
-      const maxAdmissionNo = Math.max(...admissionNos);
-      const newAdmissionNo = maxAdmissionNo + 1;
+
+      if (admissionNos.length === 0) {
+        // If there are no existing students, set admissionNo to 1
+        newAdmissionNo = 1;
+      } else {
+        const maxAdmissionNo = Math.max(...admissionNos);
+        newAdmissionNo = maxAdmissionNo + 1;
+      }
 
       const newStudent = await addDoc(studentRef, {
         schoolID,
@@ -129,7 +135,6 @@ const AddStudentModal = ({ open, onClose }) => {
         status,
         program,
         aggregate,
-        jhsAttended,
         dateOfbirth,
         smsContact,
         year,
@@ -150,16 +155,12 @@ const AddStudentModal = ({ open, onClose }) => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
 
       // Log the addition of a new house
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Added new Student: ${indexNumber}`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -194,21 +195,22 @@ const AddStudentModal = ({ open, onClose }) => {
           />
           <TextField
             required
-            label="First Name"
-            name="firstName"
-            fullWidth
-            margin="normal"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-          />
-          <TextField
-            required
             label="Last Name"
             name="lastName"
             fullWidth
             margin="normal"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+          />
+
+          <TextField
+            required
+            label="Other Names"
+            name="firstName"
+            fullWidth
+            margin="normal"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
           />
           <TextField
             required
@@ -220,7 +222,7 @@ const AddStudentModal = ({ open, onClose }) => {
             value={gender}
             onChange={(e) => setGender(e.target.value)}
           >
-            {["Male", "Female"].map((option) => (
+            {["MALE", "FEMALE"].map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -236,7 +238,7 @@ const AddStudentModal = ({ open, onClose }) => {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            {["day", "boarding"].map((option) => (
+            {["DAY", "BOARDING"].map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>
@@ -268,15 +270,7 @@ const AddStudentModal = ({ open, onClose }) => {
             value={aggregate}
             onChange={(e) => setAggregate(e.target.value)}
           />
-          <TextField
-            required
-            label="JHS Attended"
-            name="jhsAttended"
-            fullWidth
-            margin="normal"
-            value={jhsAttended}
-            onChange={(e) => setJhsAttended(e.target.value)}
-          />
+
           <TextField
             required
             label="Date Of Birth"

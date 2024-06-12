@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { format, parseISO } from "date-fns";
 
 const Logs = () => {
   const { schoolID } = useParams();
@@ -58,9 +59,18 @@ const Logs = () => {
 
           for (const _doc of querySnapshot.docs) {
             const logData = _doc.data();
-            const date = await getCurrentTime(); // Use the World Time API to get the current time
-            const formattedDate = date.toLocaleDateString();
-            const formattedTime = date.toLocaleTimeString();
+            const actionDateString = logData.actionDate;
+            const actionDate = new Date(actionDateString);
+
+            // Subtract 1 hour (3600000 milliseconds) from the actionDate
+            actionDate.setTime(actionDate.getTime() - 3600000);
+
+            const formattedDate = actionDate.toLocaleDateString();
+            const formattedTime = actionDate.toLocaleTimeString();
+
+            console.log(actionDate);
+            console.log(`Formatted Date: ${formattedDate}`);
+            console.log(`Formatted Time: ${formattedTime}`);
 
             // Fetch adminFullName from admin collection based on adminID
             const adminEmail = logData.adminID; // Use adminEmail instead of adminID
@@ -195,7 +205,7 @@ const Logs = () => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-      <NetworkStatusWarning/>
+      <NetworkStatusWarning />
     </div>
   );
 };

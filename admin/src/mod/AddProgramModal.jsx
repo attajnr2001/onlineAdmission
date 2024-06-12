@@ -7,7 +7,6 @@ import {
   DialogTitle,
   DialogContent,
   TextField,
-  MenuItem,
   Snackbar,
   Alert,
 } from "@mui/material";
@@ -63,7 +62,7 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       const q2 = query(
         programsRef,
         where("schoolID", "==", schoolID),
-        where("name", "==", name)
+        where("name", "==", name.toUpperCase())
       );
 
       const [programIDSnapshot, nameSnapshot] = await Promise.all([
@@ -81,8 +80,8 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       const docRef = await addDoc(collection(db, "programs"), {
         schoolID: schoolID,
         programID: programID,
-        name: name,
-        shortname: shortname,
+        name: name.toUpperCase(),
+        shortname: shortname.toUpperCase(), // Convert shortname to uppercase
         noOfStudents: parseInt(noOfStudents),
       });
       console.log("Program added with ID: ", docRef.id);
@@ -92,16 +91,12 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
 
       // Log the addition of a new house
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Added new Program: ${formData.name}`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -146,24 +141,10 @@ const AddProgramModal = ({ open, onClose, onAddProgram }) => {
           name="name"
           value={formData.name}
           onChange={handleChange}
-          select
           fullWidth
           margin="normal"
           required
-        >
-          {[
-            "General Science",
-            "General Arts",
-            "Business",
-            "Technical",
-            "Home Economics",
-            "Visual Arts",
-          ].map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
         <TextField
           label="Short Name"
           name="shortname"

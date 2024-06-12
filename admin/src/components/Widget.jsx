@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../helpers/firebase";
 import "../styles/widget.css";
-import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
-
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
 import {
   Verified,
   CheckCircle,
@@ -12,10 +11,10 @@ import {
   HolidayVillage,
 } from "@mui/icons-material";
 import { useParams } from "react-router-dom";
-import LoadingSkeleton from "./LoadingSkeleton"; // Import the Skeleton component
+import LoadingSkeleton from "./LoadingSkeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
-const Widget = ({ type }) => {
+const Widget = React.memo(({ type }) => {
   const [loading, setLoading] = useState(true);
   const [pop, setPop] = useState(0);
   const [admittedPop, setAdmittedPop] = useState(0);
@@ -24,7 +23,62 @@ const Widget = ({ type }) => {
   const [boardingPop, setBoardingPop] = useState(0);
   const { schoolID } = useParams();
   const [diff, setDiff] = useState(null);
-  let data;
+
+  const widgetData = useMemo(() => {
+    switch (type) {
+      case "placed":
+        return {
+          title: "PLACED BY CSSPS",
+          query: "placed",
+          link: "View all",
+          pop,
+          perc: 100,
+          icon: (
+            <Verified
+              className="icon"
+              style={{
+                backgroundColor: "rgba(0, 128, 0, 0.2)",
+                color: "green",
+              }}
+            />
+          ),
+        };
+      case "admitted":
+        return {
+          title: "COMPLETED ONLINE ADMISSION PROCESS",
+          link: "View all",
+          pop: admittedPop,
+          perc: Math.floor((admittedPop / pop) * 100),
+          icon: (
+            <CheckCircle
+              className="icon"
+              style={{
+                backgroundColor: "rgba(218, 165, 32, 0.2)",
+                color: "goldenrod",
+              }}
+            />
+          ),
+        };
+      case "regected":
+        return {
+          title: "YET TO PERFORM ONLINE ADMISSION",
+          link: "View all",
+          pop: notAdmittedPop,
+          perc: Math.ceil((notAdmittedPop / pop) * 100),
+          icon: (
+            <Cancel
+              className="icon"
+              style={{
+                color: "crimson",
+                backgroundColor: "rgba(255, 0, 0, 0.2)",
+              }}
+            />
+          ),
+        };
+      default:
+        return {};
+    }
+  }, [type, pop, admittedPop, notAdmittedPop]);
 
   useEffect(() => {
     const studentsRef = collection(db, "students");
@@ -32,7 +86,7 @@ const Widget = ({ type }) => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const totalStudents = snapshot.size;
       setPop(totalStudents);
-      setLoading(false); // Set loading to false when data is loaded
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -61,8 +115,8 @@ const Widget = ({ type }) => {
       where("completed", "==", false)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const totalAdmitted = snapshot.size;
-      setNotAdmittedPop(totalAdmitted);
+      const totalNotAdmitted = snapshot.size;
+      setNotAdmittedPop(totalNotAdmitted);
     });
 
     return () => unsubscribe();
@@ -74,11 +128,11 @@ const Widget = ({ type }) => {
       studentsRef,
       where("schoolID", "==", schoolID),
       where("completed", "==", true),
-      where("status", "==", "day")
+      where("status", "==", "DAY")
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const totalAdmitted = snapshot.size;
-      setDayPop(totalAdmitted);
+      const totalDayStudents = snapshot.size;
+      setDayPop(totalDayStudents);
     });
 
     return () => unsubscribe();
@@ -90,11 +144,11 @@ const Widget = ({ type }) => {
       studentsRef,
       where("schoolID", "==", schoolID),
       where("completed", "==", true),
-      where("status", "==", "boarding")
+      where("status", "==", "BOARDING")
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const totalAdmitted = snapshot.size;
-      setBoardingPop(totalAdmitted);
+      const totalBoardingStudents = snapshot.size;
+      setBoardingPop(totalBoardingStudents);
     });
 
     return () => unsubscribe();
@@ -102,118 +156,6 @@ const Widget = ({ type }) => {
 
   if (loading) {
     return <LoadingSkeleton />; // Render Skeleton while loading
-  }
-
-  switch (type) {
-    case "placed":
-      data = {
-        title: "PLACED BY CSSPS",
-        query: "placed",
-        link: "View all",
-        pop: pop,
-        perc: 100,
-        icon: (
-          <Verified
-            className="icon"
-            style={{
-              backgroundColor: "rgba(0, 128, 0, 0.2)",
-              color: "green",
-            }}
-          />
-        ),
-      };
-      break;
-    case "admitted":
-      data = {
-        title: "COMPLETED ONLINE ADMISSION PROCESS",
-        link: "View all",
-        pop: admittedPop,
-        perc: Math.floor((admittedPop / pop) * 100),
-        icon: (
-          <CheckCircle
-            className="icon"
-            style={{
-              backgroundColor: "rgba(218, 165, 32, 0.2)",
-              color: "goldenrod",
-            }}
-          />
-        ),
-      };
-      break;
-    case "regected":
-      data = {
-        title: "YET TO PERFORM ONLINE ADMISSION",
-        link: "View all",
-        pop: notAdmittedPop,
-        perc: Math.ceil((notAdmittedPop / pop) * 100),
-        icon: (
-          <Cancel
-            className="icon"
-            style={{
-              color: "crimson",
-              backgroundColor: "rgba(255, 0, 0, 0.2)",
-            }}
-          />
-        ),
-      };
-      break;
-    // widget for house allocations
-    case "total":
-      data = {
-        title: "TOTAL REGISTERED STUDENTS",
-        query: "total",
-        link: "View all",
-        pop: admittedPop,
-        perc: 100,
-        icon: (
-          <Verified
-            className="icon"
-            style={{
-              backgroundColor: "rgba(0, 128, 0, 0.2)",
-              color: "green",
-            }}
-          />
-        ),
-      };
-      break;
-    case "boarding":
-      data = {
-        title: "BOARDING STUDENTS",
-        query: "boarding",
-        link: "View all",
-        pop: boardingPop,
-        perc: Math.floor((boardingPop / admittedPop) * 100),
-        icon: (
-          <HolidayVillage
-            className="icon"
-            style={{
-              backgroundColor: "rgba(0, 128, 0, 0.2)",
-              color: "green",
-            }}
-          />
-        ),
-      };
-      break;
-    case "day":
-      data = {
-        title: "DAY STUDENTS",
-        query: "day",
-        link: "View all",
-        pop: dayPop,
-        perc: Math.ceil((dayPop / admittedPop) * 100),
-        icon: (
-          <Chalet
-            className="icon"
-            style={{
-              backgroundColor: "rgba(0, 128, 0, 0.2)",
-              color: "green",
-            }}
-          />
-        ),
-      };
-      break;
-    default:
-      break;
   }
 
   return (
@@ -226,22 +168,22 @@ const Widget = ({ type }) => {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <div className="left">
-            <span className="title">{data.title}</span>
-            <span className="pop">{data.pop}</span>
-            <span className="link">{data.link}</span>
+            <span className="title">{widgetData.title}</span>
+            <span className="pop">{widgetData.pop}</span>
+            <span className="link">{widgetData.link}</span>
           </div>
           <div className="right">
             <div className="percentage positive">
-              {data.perc}
+              {widgetData.perc}
               {diff}%
             </div>
-            {data.icon}
+            {widgetData.icon}
           </div>
         </motion.div>
       </AnimatePresence>
       <NetworkStatusWarning />
     </>
   );
-};
+});
 
 export default Widget;

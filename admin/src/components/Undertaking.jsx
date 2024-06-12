@@ -107,11 +107,16 @@ const Undertaking = () => {
               console.log("Undertaking URL updated in admission document.");
             });
 
-            // Log the addition of a new undertaking file
+            const response = await fetch(
+              "http://worldtimeapi.org/api/timezone/Africa/Accra"
+            );
+            const data = await response.json();
+            const dateTimeString = data.datetime;
+
             const logsCollection = collection(db, "logs");
             await addDoc(logsCollection, {
               action: `Undertaking File Updated`,
-              actionDate: new Date(),
+              actionDate: dateTimeString,
               adminID: currentUser.email,
               schoolID: schoolID,
               locationIP: locationIP || "",
@@ -173,7 +178,7 @@ const Undertaking = () => {
           {successMessage}
         </Alert>
       </Snackbar>
-      <NetworkStatusWarning/>
+      <NetworkStatusWarning />
     </div>
   );
 };

@@ -47,6 +47,9 @@ const EditStudent = () => {
   const [gender, setGender] = useState("");
   const [aggregate, setAggregate] = useState("");
   const [program, setProgram] = useState({});
+  const [house, setHouse] = useState({});
+  const [houses, setHouses] = useState([]);
+  const [selectedHouse, setSelectedHouse] = useState("");
   const [residentialStatus, setResidentialStatus] = useState("");
   const [rawScore, setRawScore] = useState("");
   const [enrollmentCode, setEnrollmentCode] = useState("");
@@ -77,7 +80,6 @@ const EditStudent = () => {
   const [residentialTelephone, setResidentialTelephone] = useState("");
   const [digitalAddress, setDigitalAddress] = useState("");
   const [nationality, setNationality] = useState("Ghana");
-
   const [, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [form, setForm] = useState(null);
@@ -93,6 +95,28 @@ const EditStudent = () => {
   const toggleWidgets = () => {
     setShowPersonalRecords(!showPersonalRecords);
   };
+
+  useEffect(() => {
+    const fetchHouses = async () => {
+      try {
+        const housesQuery = query(
+          collection(db, "houses"),
+          where("gender", "==", student.gender),
+          where("schoolID", "==", schoolID)
+        );
+        const housesSnapshot = await getDocs(housesQuery);
+        const housesList = housesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+        }));
+        setHouses(housesList);
+      } catch (error) {
+        console.error("Error fetching houses:", error);
+      }
+    };
+
+    fetchHouses();
+  }, [student.gender, schoolID]);
 
   // find and fetch student data from students collection to populate the fields
   useEffect(() => {
@@ -115,7 +139,7 @@ const EditStudent = () => {
       setDateOfBirth(studentData.data().dateOfBirth);
       setNationality(studentData.data().nationality);
       setReligion(studentData.data().religion);
-      setReligiousDenomination(studentData.data().religiousDenomination);
+      setReligiousDenomination(studentData.data().religiousDenomination || "");
       setPermanentAddress(studentData.data().permanentAddress);
       setTown(studentData.data().town);
       setRegion(studentData.data().region);
@@ -135,10 +159,16 @@ const EditStudent = () => {
       setResidentialTelephone(studentData.data().residentialTelephone);
       setDigitalAddress(studentData.data().digitalAddress);
       setLoading(false);
+      setSelectedHouse(studentData.data().house || "");
+
       // Fetch the program data
       const programID = studentData.data().program;
       const programData = await getDoc(doc(db, `programs/${programID}`));
+      const houseID = studentData.data().house;
+      const houseData = await getDoc(doc(db, `houses/${houseID}`));
+
       setProgram(programData.data());
+      setHouse(houseData.data());
     };
     fetchStudentData();
   }, [studentID]);
@@ -236,6 +266,33 @@ const EditStudent = () => {
     form && uploadForm();
   }, [form]);
 
+  const getRandomHouseID = async (student, schoolID) => {
+    try {
+      let houseID = student.house;
+
+      if (!houseID) {
+        const housesQuery = query(
+          collection(db, "houses"),
+          where("gender", "==", student.gender),
+          where("schoolID", "==", schoolID)
+        );
+        const housesSnapshot = await getDocs(housesQuery);
+        const housesList = housesSnapshot.docs.map((doc) => doc.id);
+
+        if (housesList.length === 0) {
+          throw new Error("No available houses for the student's gender.");
+        }
+
+        houseID = housesList[Math.floor(Math.random() * housesList.length)];
+      }
+
+      return houseID;
+    } catch (error) {
+      console.error("Error getting random house ID:", error);
+      throw error;
+    }
+  };
+
   const handleSaveChanges = async () => {
     try {
       setIsSaving(true);
@@ -270,15 +327,12 @@ const EditStudent = () => {
         !interest ||
         !ghanaCardNumber ||
         !mobilePhone ||
-        !email ||
         !nHISNumber ||
         !fathersName ||
         !fathersOccupation ||
         !mothersName ||
         !mothersOccupation ||
-        !guardian ||
-        !residentialTelephone ||
-        !digitalAddress
+        !guardian
       ) {
         setSnackbarMessage("Please fill in all required fields.");
         setSnackbarSeverity("error");
@@ -288,22 +342,11 @@ const EditStudent = () => {
       }
 
       // Fetch houses collection and randomly select a house if not already assigned
-      let houseID = student.house;
-      if (!houseID) {
-        const housesQuery = query(
-          collection(db, "houses"),
-          where("gender", "==", student.gender)
-        );
-        const housesSnapshot = await getDocs(housesQuery);
-        const housesList = housesSnapshot.docs.map((doc) => doc.id);
-        if (housesList.length === 0) {
-          setSnackbarMessage("No available houses for the student's gender.");
-          setSnackbarSeverity("error");
-          setOpenSnackbar(true);
-          setIsSaving(false);
-          return;
-        }
-        houseID = housesList[Math.floor(Math.random() * housesList.length)];
+      let houseID;
+      if (selectedHouse) {
+        houseID = selectedHouse;
+      } else {
+        houseID = await getRandomHouseID(student, schoolID);
       }
 
       // Save changes to students collection
@@ -345,12 +388,14 @@ const EditStudent = () => {
       setSnackbarMessage("Student details updated successfully.");
       setSnackbarSeverity("success");
       setOpenSnackbar(true);
+      setTimeout(() => {
+        navigate(`/dashboard/${schoolID}/${studentID}`);
+      }, 2000);
     } catch (error) {
       console.error("Error updating student details:", error);
       setSnackbarMessage("Failed to update student details. Please try again.");
       setSnackbarSeverity("error");
       setOpenSnackbar(true);
-      navigate(`/dashboard/${schoolID}/${studentID}`);
     } finally {
       setIsSaving(false);
     }
@@ -416,7 +461,7 @@ const EditStudent = () => {
                   shrink: true,
                 }}
               >
-                {["Male", "Female"].map((option) => (
+                {["MALE", "FEMALE"].map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
                   </MenuItem>
@@ -451,16 +496,6 @@ const EditStudent = () => {
               />
               <TextField
                 required
-                label="First Name"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                disabled
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-              <TextField
-                required
                 label="Last Name"
                 variant="outlined"
                 fullWidth
@@ -468,6 +503,16 @@ const EditStudent = () => {
                 disabled
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+              />
+              <TextField
+                required
+                label="Other Names"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                disabled
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
               />
               <TextField
                 required
@@ -556,6 +601,24 @@ const EditStudent = () => {
         </TextField>
 
         <p className="title">PERSONAL RECORDS</p>
+
+        {admissionData.autoStudentHousing ? (
+          <TextField
+            label="House"
+            name="house"
+            select
+            value={selectedHouse}
+            onChange={(e) => setSelectedHouse(e.target.value)}
+            fullWidth
+            margin="normal"
+          >
+            {houses.map((house) => (
+              <MenuItem key={house.id} value={house.id}>
+                {house.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        ) : null}
 
         {admissionData.allowUploadPictures ? (
           <div>

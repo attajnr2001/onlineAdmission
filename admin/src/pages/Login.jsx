@@ -63,9 +63,16 @@ const Login = () => {
         throw new Error("Your credentials are deactivated."); // Throw an error if admin is not active
       }
 
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
+      console.log(dateTimeString);
+
       await addDoc(collection(db, "logs"), {
         action: "login",
-        actionDate: new Date(),
+        actionDate: dateTimeString,
         adminID: user.email,
         locationIP: locationIP,
         platform: getPlatform(),

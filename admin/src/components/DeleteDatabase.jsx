@@ -39,16 +39,12 @@ const DeleteDatabase = () => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
 
       // Log the addition of a new house
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Database Deleted`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -92,7 +88,7 @@ const DeleteDatabase = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <NetworkStatusWarning/>
+      <NetworkStatusWarning />
     </div>
   );
 };

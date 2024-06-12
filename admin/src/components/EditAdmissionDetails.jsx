@@ -27,7 +27,8 @@ const EditAdmissionDetails = () => {
   const [admissionData, setAdmissionData] = useState({
     senderID: "",
     year: "",
-    reOpeningDateTime: null,
+    reOpeningDateTime: null, // auto datetime time to determine admission opened or closed
+    schOpeningDateTime: null, // the datetime sch reopens
     academicYear: "",
     acceptOnlinePayment: false,
     serviceCharge: "",
@@ -42,6 +43,8 @@ const EditAdmissionDetails = () => {
 
   const [reOpeningDate, setReOpeningDate] = useState("");
   const [reOpeningTime, setReOpeningTime] = useState("");
+  const [schOpeningDate, setSchOpeningDate] = useState("");
+  const [schOpeningTime, setSchOpeningTime] = useState("");
   const [alertMessage, setAlertMessage] = useState(null);
   const [alertSeverity, setAlertSeverity] = useState("success");
   const [announcementTextFields, setAnnouncementTextFields] = useState([
@@ -64,13 +67,24 @@ const EditAdmissionDetails = () => {
             const date = new Date(
               admissionData.reOpeningDateTime.seconds * 1000
             );
+            const schOpenDate = new Date(
+              admissionData.schoolOpensOn.seconds * 1000
+            );
+
             const formattedDate = date.toISOString().split("T")[0];
             const hours = ("0" + date.getHours()).slice(-2);
             const minutes = ("0" + date.getMinutes()).slice(-2);
             const formattedTime = `${hours}:${minutes}`;
 
+            const schFormattedDate = schOpenDate.toISOString().split("T")[0];
+            const schHours = ("0" + schOpenDate.getHours()).slice(-2);
+            const schMinutes = ("0" + schOpenDate.getMinutes()).slice(-2);
+            const schFormattedTime = `${schHours}:${schMinutes}`;
+
             setReOpeningDate(formattedDate);
             setReOpeningTime(formattedTime);
+            setSchOpeningDate(schFormattedDate);
+            setSchOpeningTime(schFormattedTime);
             setAnnouncementTextFields(
               admissionData.announcement.map((announcement) => ({
                 value: announcement,
@@ -109,10 +123,13 @@ const EditAdmissionDetails = () => {
 
     setIsUpdating(true);
     try {
+      const schoolOpensOn = new Date(`${schOpeningDate}T${schOpeningTime}`);
+
       await updateDoc(doc(db, "admission", admissionData.id), {
         senderID: admissionData.senderID,
         year: admissionData.year,
         reOpeningDateTime: new Date(`${reOpeningDate}T${reOpeningTime}`),
+        schoolOpensOn,
         academicYear: admissionData.academicYear,
         acceptOnlinePayment: admissionData.acceptOnlinePayment,
         serviceCharge: admissionData.serviceCharge,
@@ -130,15 +147,11 @@ const EditAdmissionDetails = () => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
 
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Admission Details updated Successfully`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         schoolID: schoolID,
         adminID: currentUser.email,
         locationIP: locationIP || "",
@@ -183,7 +196,7 @@ const EditAdmissionDetails = () => {
 
   return (
     <>
-      <p>Admission Details</p>
+      <h4>Admission Details</h4>
 
       <div>
         <TextField
@@ -204,30 +217,6 @@ const EditAdmissionDetails = () => {
           fullWidth
           value={admissionData.year}
           onChange={(e) => handleTextFieldChange("year", e.target.value)}
-          margin="normal"
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-
-        <TextField
-          label="Re-Opening Date"
-          type="date"
-          fullWidth
-          value={reOpeningDate}
-          onChange={(e) => setReOpeningDate(e.target.value)}
-          margin="normal"
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-
-        <TextField
-          label="Re-Opening Time"
-          type="time"
-          fullWidth
-          value={reOpeningTime}
-          onChange={(e) => setReOpeningTime(e.target.value)}
           margin="normal"
           InputLabelProps={{
             shrink: true,
@@ -341,6 +330,54 @@ const EditAdmissionDetails = () => {
             </MenuItem>
           ))}
         </TextField>
+
+        <TextField
+          label="Auto Admission Open Date"
+          type="date"
+          fullWidth
+          value={reOpeningDate}
+          onChange={(e) => setReOpeningDate(e.target.value)}
+          margin="normal"
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        <TextField
+          label="Auto Admission Open Time"
+          type="time"
+          fullWidth
+          value={reOpeningTime}
+          onChange={(e) => setReOpeningTime(e.target.value)}
+          margin="normal"
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        <TextField
+          label="School Resopen Date"
+          type="date"
+          fullWidth
+          value={schOpeningDate}
+          onChange={(e) => setSchOpeningDate(e.target.value)}
+          margin="normal"
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+
+        <TextField
+          label="School Resopen Time"
+          type="time"
+          fullWidth
+          value={schOpeningTime}
+          onChange={(e) => setSchOpeningTime(e.target.value)}
+          margin="normal"
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
 
         <TextField
           label="Admission Opened"

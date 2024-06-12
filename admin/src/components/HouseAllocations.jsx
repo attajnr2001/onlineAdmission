@@ -5,14 +5,8 @@ import "../styles/widget.css";
 import Chart from "./Chart";
 import { db } from "../helpers/firebase";
 import { useParams } from "react-router-dom";
-import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  onSnapshot,
-} from "firebase/firestore";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 const HouseAllocations = () => {
   const [houseData, setHouseData] = useState([]);
@@ -21,88 +15,72 @@ const HouseAllocations = () => {
   const [dayStudents, setDayStudents] = useState(0);
   const { schoolID } = useParams();
   const [showWidgets, setShowWidgets] = useState(false);
-
+  ("DAY");
   const toggleWidgets = () => {
     setShowWidgets(!showWidgets);
   };
 
   useEffect(() => {
-    const unsubscribeHouses = onSnapshot(
-      query(collection(db, "houses"), where("schoolID", "==", schoolID)),
-      (snapshot) => {
-        const fetchedHouses = [];
-        snapshot.forEach((doc) => {
-          fetchedHouses.push({ id: doc.id, ...doc.data() });
-        });
-        setHouseData(fetchedHouses);
-      },
-      (error) => {
-        console.error("Error fetching houses:", error);
-      }
-    );
-
-    const fetchTotalStudents = () => {
-      const unsubscribeStudents = onSnapshot(
-        query(
-          collection(db, "students"),
-          where("schoolID", "==", schoolID),
-          where("completed", "==", true)
-        ),
+    const fetchHouseData = () => {
+      const q = query(
+        collection(db, "houses"),
+        where("schoolID", "==", schoolID)
+      );
+      return onSnapshot(
+        q,
         (snapshot) => {
-          setTotalStudents(snapshot.size);
+          const fetchedHouses = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setHouseData(fetchedHouses);
         },
         (error) => {
-          console.error("Error fetching total students:", error);
+          console.error("Error fetching houses:", error);
         }
       );
-
-      return unsubscribeStudents;
     };
 
-    const fetchBoardingStudents = () => {
-      const unsubscribeBoarding = onSnapshot(
-        query(
-          collection(db, "students"),
-          where("schoolID", "==", schoolID),
-          where("status", "==", "boarding"),
-          where("completed", "==", true)
-        ),
+    const fetchStudentData = () => {
+      const q = query(
+        collection(db, "students"),
+        where("schoolID", "==", schoolID),
+        where("completed", "==", true)
+      );
+      return onSnapshot(
+        q,
         (snapshot) => {
-          setBoardingStudents(snapshot.size);
+          let total = 0;
+          let boarding = 0;
+          let day = 0;
+
+          snapshot.forEach((doc) => {
+            total += 1;
+            const status = doc.data().status.toLowerCase();
+            console.log(status);
+            if (status === "BOARDING") {
+              boarding += 1;
+            } else if (status === "DAY") {
+              day += 1;
+            }
+          });
+
+          setTotalStudents(total);
+          setBoardingStudents(boarding);
+          setDayStudents(day);
         },
         (error) => {
-          console.error("Error fetching boarding students:", error);
+          console.error("Error fetching students:", error);
         }
       );
-
-      return unsubscribeBoarding;
     };
 
-    const fetchDayStudents = () => {
-      const unsubscribeDay = onSnapshot(
-        query(
-          collection(db, "students"),
-          where("schoolID", "==", schoolID),
-          where("completed", "==", true),
-          where("status", "==", "day")
-        ),
-        (snapshot) => {
-          setDayStudents(snapshot.size);
-        },
-        (error) => {
-          console.error("Error fetching day students:", error);
-        }
-      );
-
-      return unsubscribeDay;
-    };
-
-    fetchTotalStudents();
-    fetchBoardingStudents();
-    fetchDayStudents();
+    const unsubscribeHouses = fetchHouseData();
+    const unsubscribeStudents = fetchStudentData();
 
     return () => {
       unsubscribeHouses();
+      unsubscribeStudents();
     };
   }, [schoolID]);
 
@@ -131,8 +109,8 @@ const HouseAllocations = () => {
         }}
       >
         <Widget type="total" pop={totalStudents} />
-        <Widget type="boarding" pop={boardingStudents} />
-        <Widget type="day" pop={dayStudents} />
+        <Widget type="BOARDING" pop={boardingStudents} />
+        <Widget type="DAY" pop={dayStudents} />
       </Box>
       <div className="chart">
         <Chart

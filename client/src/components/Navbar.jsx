@@ -14,10 +14,18 @@ import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
-import { useParams, NavLink, Link, useNavigate } from "react-router-dom";
+import { useParams, NavLink, useNavigate } from "react-router-dom";
 import "../styles/navbar.css";
 import { db } from "../helpers/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import viteLogo from "/vite.svg";
+import {
+  doc,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 const HideOnScroll = (props) => {
   const { children } = props;
@@ -34,8 +42,10 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [schoolName, setSchoolName] = useState(null);
   const [schoolImage, setSchoolImage] = useState(null);
+  const [schoolShortName, setSchoolShortName] = useState(null);
   const { schoolID, studentID } = useParams();
-  const [admission, setAdmission] =  useState(null)
+  const [admissionYear, setAdmissionYear] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!schoolID) return;
@@ -46,6 +56,7 @@ const Navbar = () => {
         const schoolData = docSnapshot.data();
         setSchoolName(schoolData.name);
         setSchoolImage(schoolData.image);
+        setSchoolShortName(schoolData.shortName);
       } else {
         console.log("School document not found");
       }
@@ -55,10 +66,22 @@ const Navbar = () => {
   }, [schoolID]);
 
   useEffect(() => {
-    
-  })
+    if (!schoolID) return;
 
+    const fetchAdmissionData = async () => {
+      const q = query(
+        collection(db, "admission"),
+        where("schoolID", "==", schoolID)
+      );
+      const querySnapshot = await getDocs(q);
+      const admissionData = querySnapshot.docs.map((doc) => doc.data());
+      if (admissionData.length > 0) {
+        setAdmissionYear(admissionData[0].academicYear); // Assuming you want the year from the first document
+      }
+    };
 
+    fetchAdmissionData();
+  }, [schoolID]);
 
   useEffect(() => {
     if (!studentID) return;
@@ -80,6 +103,12 @@ const Navbar = () => {
     setMenuOpen(!menuOpen);
   };
 
+  const handleLogout = () => {
+    // Implement your logout logic here
+    console.log("Logout");
+    navigate("/");
+  };
+
   return (
     <>
       <HideOnScroll>
@@ -92,7 +121,6 @@ const Navbar = () => {
           }}
         >
           <Toolbar>
-            <Avatar src={schoolImage} />
             <Typography
               variant="h6"
               sx={{
@@ -102,8 +130,35 @@ const Navbar = () => {
                 ml: 1,
               }}
             >
-              {schoolName}
+              <Avatar src={viteLogo} sx={{width: "30px", height: "30px"}}/>
             </Typography>
+            {schoolImage ? (
+              <Avatar src={schoolImage} sx={{width: "30px", height: "30px"}}/>
+            ) : (
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: "bold",
+                  flexGrow: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                ONLINE ADMISSION
+              </Typography>
+            )}
+
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: "bold",
+                flexGrow: 1,
+                textTransform: "uppercase",
+                ml: 1,
+              }}
+            >
+              {schoolShortName} {admissionYear && `[${admissionYear}]`}
+            </Typography>
+
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: "10px" }}>
               {studentID ? (
                 <>
@@ -127,14 +182,7 @@ const Navbar = () => {
                   >
                     EDIT STUDENT
                   </Button>
-                  <Button
-                    component={NavLink}
-                    to={``}
-                    sx={{ color: "black" }}
-                    className={({ isActive }) =>
-                      isActive ? "nav-link-active" : "nav-link"
-                    }
-                  >
+                  <Button sx={{ color: "black" }} onClick={handleLogout}>
                     LOGOUT
                   </Button>
                 </>
@@ -214,8 +262,7 @@ const Navbar = () => {
                   <ListItemText primary="EDIT STUDENT" />
                 </ListItemButton>
                 <ListItemButton
-                  component={NavLink}
-                  to={``}
+                  onClick={handleLogout}
                   sx={(theme) => ({
                     "&.nav-link-active": {
                       backgroundColor: theme.palette.action.selected,

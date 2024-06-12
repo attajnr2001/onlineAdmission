@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import Widget from "../components/Widget";
+import React, { lazy, Suspense, useState, useMemo } from "react";
 import { Outlet } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
@@ -8,6 +7,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { motion, AnimatePresence } from "framer-motion";
 
+const Widget = lazy(() => import("../components/Widget"));
+
 const Dashboard = () => {
   const { schoolID } = useParams();
   const [showWidgets, setShowWidgets] = useState(true);
@@ -15,6 +16,8 @@ const Dashboard = () => {
   const toggleWidgets = () => {
     setShowWidgets(!showWidgets);
   };
+
+  const widgetTypes = useMemo(() => ["placed", "admitted", "regected"], []);
 
   return (
     <>
@@ -47,15 +50,13 @@ const Dashboard = () => {
                 padding: 2,
               }}
             >
-              <Box sx={{ flex: 1, display: "flex" }}>
-                <Widget type="placed" />
-              </Box>
-              <Box sx={{ flex: 1, display: "flex" }}>
-                <Widget type="admitted" />
-              </Box>
-              <Box sx={{ flex: 1, display: "flex" }}>
-                <Widget type="regected" />
-              </Box>
+              {widgetTypes.map((type) => (
+                <Box key={type} sx={{ flex: 1, display: "flex" }}>
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <Widget type={type} />
+                  </Suspense>
+                </Box>
+              ))}
             </Box>
           </motion.div>
         )}
@@ -65,4 +66,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default React.memo(Dashboard);

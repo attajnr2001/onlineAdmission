@@ -12,7 +12,8 @@ import {
   reauthenticateWithCredential,
   updatePassword,
   EmailAuthProvider,
-} from "firebase/auth";import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
+} from "firebase/auth";
+import NetworkStatusWarning from "../helpers/NetworkStatusWarning"; // Import the component
 
 import { AuthContext } from "../context/AuthContext";
 import { collection, addDoc } from "firebase/firestore";
@@ -28,7 +29,6 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const locationIP = useLocationIP();
-  const [currentDateTime, setCurrentDateTime] = useState(null);
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -56,11 +56,15 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
 
-      // Add log entry to database
+      const response = await fetch(
+        "http://worldtimeapi.org/api/timezone/Africa/Accra"
+      );
+      const data = await response.json();
+      const dateTimeString = data.datetime;
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: "password changed",
-        actionDate: currentDateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP,
         platform: getPlatform(),
@@ -79,23 +83,6 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
   useEffect(() => {
     setOldPassword("");
     setNewPassword("");
-
-    // Fetch current datetime from World Time API
-    fetch("http://worldtimeapi.org/api/timezone/Africa/Accra")
-      .then((response) => response.json())
-      .then((data) => {
-        const dateTimeString = data.datetime;
-        const dateTimeParts = dateTimeString.split(/[+\-]/);
-        const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-
-        // Subtract one hour from the datetime
-        dateTime.setHours(dateTime.getHours() - 1);
-
-        setCurrentDateTime(dateTime);
-      })
-      .catch((error) => {
-        console.error("Error fetching datetime from World Time API:", error);
-      });
   }, [open]);
 
   return (
@@ -147,7 +134,6 @@ const ChangePassword = ({ open, onOpen, onClose }) => {
         </Alert>
       </Snackbar>
       <NetworkStatusWarning />
-
     </>
   );
 };

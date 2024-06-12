@@ -64,16 +64,12 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
-
+  
       // Log the addition of a new user
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `${rowData.name} is updated`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -142,7 +138,7 @@ const EditHouseModal = ({ open, onClose, rowData }) => {
               shrink: true,
             }}
           >
-            {["Male", "Female"].map((option) => (
+            {["MALE", "FEMALE"].map((option) => (
               <MenuItem key={option} value={option}>
                 {option}
               </MenuItem>

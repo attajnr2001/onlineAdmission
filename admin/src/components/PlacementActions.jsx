@@ -35,6 +35,7 @@ import {
   doc,
   getDocs,
   updateDoc,
+  orderBy,
   increment,
 } from "firebase/firestore";
 import { db, auth } from "../helpers/firebase";
@@ -57,8 +58,8 @@ const PlacementActions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openImportDialog, setOpenImportDialog] = useState(false);
-  const [order, setOrder] = useState("asc");
-  const [orderBy, setOrderBy] = useState("indexNumber");
+  const [order, setOrder] = useState("desc");
+  const [orderByIndex, setOrderBy] = useState("createdAt");
   const [openDialog, setOpenDialog] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -70,12 +71,22 @@ const PlacementActions = () => {
 
   useEffect(() => {
     const unsubscribeStudents = onSnapshot(
-      query(collection(db, "students"), where("schoolID", "==", schoolID)),
+      query(
+        collection(db, "students"),
+        where("schoolID", "==", schoolID),
+        orderBy("createdAt", "desc")
+      ),
       (snapshot) => {
         const fetchedStudents = [];
         snapshot.forEach((doc) => {
-          fetchedStudents.push({ id: doc.id, ...doc.data() });
+          const data = doc.data();
+          fetchedStudents.push({
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt.toDate(),
+          }); // Add createdAt field converted to Date object
         });
+
         setStudents(fetchedStudents);
         setLoading(false);
       },
@@ -147,7 +158,6 @@ const PlacementActions = () => {
         body: filteredStudents.map((student) => [
           student.indexNumber,
           `${student.firstName} ${student.lastName}`,
-          student.jhsAttended,
           student.aggregate,
           programs[student.program],
           student.year,
@@ -162,16 +172,12 @@ const PlacementActions = () => {
       );
       const data = await response.json();
       const dateTimeString = data.datetime;
-      const dateTimeParts = dateTimeString.split(/[+\-]/);
-      const dateTime = new Date(`${dateTimeParts[0]} UTC${dateTimeParts[1]}`);
-      // Subtract one hour from the datetime
-      dateTime.setHours(dateTime.getHours() - 1);
-
+   
       // Log the addition of a new house
       const logsCollection = collection(db, "logs");
       await addDoc(logsCollection, {
         action: `Student List Downloaded`,
-        actionDate: dateTime,
+        actionDate: dateTimeString,
         adminID: currentUser.email,
         locationIP: locationIP || "",
         platform: getPlatform(),
@@ -183,7 +189,7 @@ const PlacementActions = () => {
   };
 
   const handleRequestSort = (event, property) => {
-    const isAsc = orderBy === property && order === "asc";
+    const isAsc = orderByIndex === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
@@ -191,11 +197,37 @@ const PlacementActions = () => {
   const filteredStudents = students.filter((student) => {
     const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
     return fullName.includes(searchQuery);
-  }); 
+  });
+
+  const getComparator = (order, orderByIndex) => {
+    return order === "desc"
+      ? (a, b) => descendingComparator(a, b, orderByIndex)
+      : (a, b) => -descendingComparator(a, b, orderByIndex);
+  };
+
+  const descendingComparator = (a, b, orderByIndex) => {
+    if (b[orderByIndex] < a[orderByIndex]) {
+      return -1;
+    }
+    if (b[orderByIndex] > a[orderByIndex]) {
+      return 1;
+    }
+    return 0;
+  };
+
+  const stableSort = (array, comparator) => {
+    const stabilizedThis = array.map((el, index) => [el, index]);
+    stabilizedThis.sort((a, b) => {
+      const order = comparator(a[0], b[0]);
+      if (order !== 0) return order;
+      return a[1] - b[1];
+    });
+    return stabilizedThis.map((el) => el[0]);
+  };
 
   const sortedStudents = stableSort(
     filteredStudents,
-    getComparator(order, orderBy)
+    getComparator(order, orderByIndex)
   );
 
   const handleDeleteUnregisteredStudents = async () => {
@@ -275,7 +307,7 @@ const PlacementActions = () => {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(event.target.value);
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0); // reset page to 0 when rows per page changes
   };
 
@@ -344,30 +376,17 @@ const PlacementActions = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "indexNumber"}
-                  direction={orderBy === "indexNumber" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "indexNumber")}
-                >
-                  Index Number
-                  {orderBy === "indexNumber" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                Index Number
               </TableCell>
-              <TableCell align="center">
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
                 <TableSortLabel
-                  active={orderBy === "lastName"}
-                  direction={orderBy === "lastName" ? order : "asc"}
+                  active={orderByIndex === "lastName"}
+                  direction={orderByIndex === "lastName" ? order : "asc"}
                   onClick={(event) => handleRequestSort(event, "lastName")}
                 >
                   Student Name
-                  {orderBy === "lastName" ? (
+                  {orderByIndex === "lastName" ? (
                     <Box component="span" sx={visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"
@@ -376,94 +395,41 @@ const PlacementActions = () => {
                   ) : null}
                 </TableSortLabel>
               </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "jhsAttended"}
-                  direction={orderBy === "jhsAttended" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "jhsAttended")}
-                >
-                  JHS Attended
-                  {orderBy === "jhsAttended" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
+
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                Aggregate
               </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "aggregate"}
-                  direction={orderBy === "aggregate" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "aggregate")}
-                >
-                  Aggregate
-                  {orderBy === "aggregate" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                Program
               </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "program"}
-                  direction={orderBy === "program" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "program")}
-                >
-                  Program
-                  {orderBy === "program" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
+
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                Status
               </TableCell>
-              <TableCell align="center">
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
                 <TableSortLabel
-                  active={orderBy === "year"}
-                  direction={orderBy === "year" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "year")}
-                >
-                  Year
-                  {orderBy === "year" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "status"}
-                  direction={orderBy === "status" ? order : "asc"}
-                  onClick={(event) => handleRequestSort(event, "status")}
-                >
-                  Status
-                  {orderBy === "status" ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center">
-                <TableSortLabel
-                  active={orderBy === "completed"}
-                  direction={orderBy === "completed" ? order : "asc"}
+                  active={orderByIndex === "completed"}
+                  direction={orderByIndex === "completed" ? order : "asc"}
                   onClick={(event) => handleRequestSort(event, "completed")}
                 >
                   Registered
-                  {orderBy === "completed" ? (
+                  {orderByIndex === "completed" ? (
+                    <Box component="span" sx={visuallyHidden}>
+                      {order === "desc"
+                        ? "sorted descending"
+                        : "sorted ascending"}
+                    </Box>
+                  ) : null}
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                <TableSortLabel
+                  active={orderByIndex === "createdAt"}
+                  direction={orderByIndex === "createdAt" ? order : "asc"}
+                  onClick={(event) => handleRequestSort(event, "createdAt")}
+                >
+                  Created At
+                  {orderByIndex === "createdAt" ? (
                     <Box component="span" sx={visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"
@@ -479,16 +445,17 @@ const PlacementActions = () => {
               <TableRow key={index}>
                 <TableCell align="center">{student.indexNumber}</TableCell>
                 <TableCell align="center">{`${student.firstName} ${student.lastName}`}</TableCell>
-                <TableCell align="center">{student.jhsAttended}</TableCell>
                 <TableCell align="center">{student.aggregate}</TableCell>
                 <TableCell align="center">
                   {programs[student.program]}
                 </TableCell>
-                <TableCell align="center">{student.year}</TableCell>
                 <TableCell align="center">{student.status}</TableCell>
                 <TableCell align="center">
                   {student.completed ? "Yes" : "No"}
                 </TableCell>
+                <TableCell align="center">
+                  {student.createdAt.toLocaleDateString()}
+                </TableCell>{" "}
               </TableRow>
             ))}
           </TableBody>
@@ -552,20 +519,20 @@ const PlacementActions = () => {
 };
 
 // Utility functions for sorting
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
+function descendingComparator(a, b, orderByIndex) {
+  if (b[orderByIndex] < a[orderByIndex]) {
     return -1;
   }
-  if (b[orderBy] > a[orderBy]) {
+  if (b[orderByIndex] > a[orderByIndex]) {
     return 1;
   }
   return 0;
 }
 
-function getComparator(order, orderBy) {
+function getComparator(order, orderByIndex) {
   return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
+    ? (a, b) => descendingComparator(a, b, orderByIndex)
+    : (a, b) => -descendingComparator(a, b, orderByIndex);
 }
 
 function stableSort(array, comparator) {
